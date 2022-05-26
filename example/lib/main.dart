@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
 
     // Data must be sorted.
     var smallDataList = [
-      for (int i = 0; i < 21; i++)
+      for (int i = 0; i < 90; i++)
         DateTimeRange(
           start: date.add(Duration(days: i)),
           end: date.add(Duration(days: i, minutes: 20 * i)),

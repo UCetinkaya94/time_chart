@@ -157,8 +157,8 @@ class TimeChartState extends State<TimeChart>
   /// Handles fade in out animations of tooltips
   late final AnimationController _tooltipController;
 
-  /// It is the sum of the width of the bar and the blank space on either side
-  double? _blockWidth;
+  /// The width of the bar and the its padding
+  double? _totalBarWidth;
 
   /// The height of the entire chart at the start of the animation
   late double _animationBeginHeight = widget.height;
@@ -181,6 +181,7 @@ class TimeChartState extends State<TimeChart>
       duration: widget.timeChartSizeAnimationDuration,
       vsync: this,
     );
+
     _tooltipController = AnimationController(
       duration: _tooltipFadeInDuration,
       reverseDuration: _tooltipFadeOutDuration,
@@ -231,7 +232,7 @@ class TimeChartState extends State<TimeChart>
 
   void _addScrollNotifier() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final minDifference = _blockWidth!;
+      final minDifference = _totalBarWidth!;
 
       _scrollControllerGroup.addOffsetChangedListener(() {
         final difference =
@@ -269,7 +270,7 @@ class TimeChartState extends State<TimeChart>
     if (!widget.activeTooltip) return;
 
     // Tooltips on bars outside the range of the currently visible chart are ignored
-    final viewRange = _blockWidth! * widget.viewMode.dayCount;
+    final viewRange = _totalBarWidth! * widget.viewMode.dayCount;
     final actualPosition = position.maxScrollExtent - position.pixels;
     if (rect.left < actualPosition || actualPosition + viewRange < rect.left) {
       return;
@@ -392,7 +393,6 @@ class TimeChartState extends State<TimeChart>
 
   bool _handleScrollNotification(ScrollNotification notification) {
     if (widget.chartType == ChartType.amount) return false;
-
     if (notification is ScrollStartNotification) {
       _cancelTimer();
     } else if (notification is ScrollEndNotification) {
@@ -403,31 +403,35 @@ class TimeChartState extends State<TimeChart>
   }
 
   void _timerCallback() {
-    final beforeFirstDataHasChanged = firstDataHasChanged;
-    final beforeTopHour = topHour;
-    final beforeBottomHour = bottomHour;
+    final prevFirstDataHasChanged = firstDataHasChanged;
+    final prevMaxHour = topHour;
+    final prevMinHour = bottomHour;
 
-    final blockIndex =
-        getCurrentBlockIndex(_barController.position, _blockWidth!).toInt();
-    final needsToAdaptScrollPosition = blockIndex > 0 && firstDataHasChanged;
+    final barIndex = getCurrentBarIndex(
+      _barController.position,
+      _totalBarWidth!,
+    ).toInt();
+
+    final needsToAdaptScrollPosition = barIndex > 0 && firstDataHasChanged;
+
     final scrollPositionDuration = Duration(
-      days: -blockIndex + (needsToAdaptScrollPosition ? 1 : 0),
+      days: -barIndex + (needsToAdaptScrollPosition ? 1 : 0),
     );
 
     processData(widget, _getFirstItemDate(addition: scrollPositionDuration));
 
-    if (topHour == beforeTopHour && bottomHour == beforeBottomHour) return;
+    if (topHour == prevMaxHour && bottomHour == prevMinHour) return;
 
-    if (beforeFirstDataHasChanged != firstDataHasChanged) {
+    if (prevFirstDataHasChanged != firstDataHasChanged) {
       // When a day is added or removed, it is a value to resolve the difference occurring in the x-axis direction.
-      final add = firstDataHasChanged ? _blockWidth! : -_blockWidth!;
+      final add = firstDataHasChanged ? _totalBarWidth! : -_totalBarWidth!;
 
       _barController.jumpTo(_barController.position.pixels + add);
       _scrollPhysics!.addPanDownPixels(add);
       _scrollPhysics!.setDayCount(dayCount!);
     }
 
-    _runHeightAnimation(beforeTopHour!, beforeBottomHour!);
+    _runHeightAnimation(prevMaxHour!, prevMinHour!);
   }
 
   double get heightWithoutLabel => widget.height - kXLabelHeight;
@@ -466,15 +470,15 @@ class TimeChartState extends State<TimeChart>
         final yLabelWidth = _getRightMargin(context);
         final totalWidth = widget.width ?? constraints.maxWidth;
 
-        _blockWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
+        _totalBarWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
 
         final innerSize = Size(
-          _blockWidth! * max(dayCount!, viewModeLimitDay),
+          _totalBarWidth! * max(dayCount!, viewModeLimitDay),
           double.infinity,
         );
 
         _scrollPhysics ??= CustomScrollPhysics(
-          blockWidth: _blockWidth!,
+          blockWidth: _totalBarWidth!,
           viewMode: widget.viewMode,
           scrollPhysicsState: ScrollPhysicsState(dayCount: dayCount!),
         );
