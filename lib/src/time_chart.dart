@@ -146,24 +146,24 @@ class TimeChartState extends State<TimeChart>
 
   Timer? _pivotHourUpdatingTimer;
 
-  /// 툴팁을 띄우기 위해 사용한다.
+  /// Used to display the tooltip
   OverlayEntry? _overlayEntry;
 
-  /// 툴팁이 떠있는 시간을 정한다.
+  /// Determines how long the tooltip is shown
   Timer? _tooltipHideTimer;
 
   Rect? _currentVisibleTooltipRect;
 
-  /// 툴팁의 fadeIn out 애니메이션을 다룬다.
+  /// Handles fade in out animations of tooltips
   late final AnimationController _tooltipController;
 
-  /// 바와 그 양 옆의 여백의 너비를 더한 값이다.
+  /// It is the sum of the width of the bar and the blank space on either side
   double? _blockWidth;
 
-  /// 에니메이션 시작시 전체 그래프의 높이
+  /// The height of the entire chart at the start of the animation
   late double _animationBeginHeight = widget.height;
 
-  /// 에니메이션 시작시 올바른 위치에서 시작하기 위한 높이 값
+  /// A height value to start at the correct position at the start of the animation
   double? _heightForAlignTop;
 
   final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier(0);
@@ -250,11 +250,12 @@ class TimeChartState extends State<TimeChart>
     if (event is PointerDownEvent) _removeEntry();
   }
 
-  /// 해당 바(bar)를 눌렀을 경우 툴팁을 띄운다.
+  /// When the relevant bar is pressed, a tooltip is displayed.
   ///
-  /// 위치는 x축 방향 left, y축 방향 top 만큼 떨어진 위치이다.
+  /// The location is the distance from the left in the x-axis
+  /// and the top in the y-axis.
   ///
-  /// 오버레이 엔트리를 이곳에서 관리하기 위해 콜백하여 이용한다.
+  /// This callback is used to manage the overlay entry.
   void _tooltipCallback({
     DateTimeRange? range,
     double? amount,
@@ -267,14 +268,14 @@ class TimeChartState extends State<TimeChart>
 
     if (!widget.activeTooltip) return;
 
-    // 현재 보이는 그래프의 범위를 벗어난 바의 툴팁은 무시한다.
+    // Tooltips on bars outside the range of the currently visible chart are ignored
     final viewRange = _blockWidth! * widget.viewMode.dayCount;
     final actualPosition = position.maxScrollExtent - position.pixels;
     if (rect.left < actualPosition || actualPosition + viewRange < rect.left) {
       return;
     }
 
-    // 현재 보이는 툴팁이 다시 호출되면 무시한다.
+    // If the currently visible tooltip is called again, it is ignored.
     if ((_tooltipHideTimer?.isActive ?? false) &&
         _currentVisibleTooltipRect == rect) return;
     _currentVisibleTooltipRect = rect;
@@ -308,7 +309,8 @@ class TimeChartState extends State<TimeChart>
     DateTime? amountDate,
   }) {
     final chartType = amount == null ? ChartType.time : ChartType.amount;
-    // 현재 위젯의 위치를 얻는다.
+
+    // Get the current widget's position
     final widgetOffset = context.getRenderBoxOffset()!;
     final tooltipSize =
         chartType == ChartType.time ? kTimeTooltipSize : kAmountTooltipSize;
@@ -327,14 +329,13 @@ class TimeChartState extends State<TimeChart>
 
     Direction direction = Direction.left;
     double tooltipLeft = localLeft - tooltipSize.width - _tooltipPadding;
-    // 툴팁을 바의 오른쪽에 배치해야 하는 경우
+    // Check if the tooltip needs to be placed to the right of the bar
     if (tooltipLeft < widgetOffset.dx) {
       direction = Direction.right;
       tooltipLeft = localLeft + barWidth + _tooltipPadding;
     }
 
     return Positioned(
-      // 바 옆에 [tooltip]을 띄운다.
       top: tooltipTop,
       left: tooltipLeft,
       child: FadeTransition(
@@ -357,7 +358,7 @@ class TimeChartState extends State<TimeChart>
     );
   }
 
-  /// 현재 존재하는 툴팁을 제거한다.
+  /// Removes the currently existing tooltip
   void _removeEntry() {
     _tooltipHideTimer?.cancel();
     _tooltipHideTimer = null;
@@ -418,7 +419,7 @@ class TimeChartState extends State<TimeChart>
     if (topHour == beforeTopHour && bottomHour == beforeBottomHour) return;
 
     if (beforeFirstDataHasChanged != firstDataHasChanged) {
-      // 하루가 추가 혹은 삭제되는 경우 x축 방향으로 발생하는 차이를 해결할 값이다.
+      // When a day is added or removed, it is a value to resolve the difference occurring in the x-axis direction.
       final add = firstDataHasChanged ? _blockWidth! : -_blockWidth!;
 
       _barController.jumpTo(_barController.position.pixels + add);
@@ -439,7 +440,7 @@ class TimeChartState extends State<TimeChart>
     final candidateUpward = diffBetween(beforeTopHour, topHour!);
     final candidateDownWard = -diffBetween(topHour!, beforeTopHour);
 
-    // (candidate)중에서 current top-bottom hour 범위에 들어오는 것을 선택한다.
+    // (candidate) select one that falls within the current top-bottom hour range
     final topDiff =
         isDirUpward(beforeTopHour, beforeBottomHour, topHour!, bottomHour!)
             ? candidateUpward
