@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_chart/src/chart.dart';
 import 'package:time_chart/src/components/utils/time_assistant.dart';
 import 'package:time_chart/src/components/utils/time_data_processor.dart';
 import 'package:time_chart/time_chart.dart';
@@ -25,12 +24,12 @@ class _MockTimeDataProcessor with TimeDataProcessor {
   }
 }
 
-Chart _getChart(
+TimeChart _getChart(
   List<DateTimeRange> data, {
   int defaultPivotHour = 18,
   ChartType chartType = ChartType.time,
 }) {
-  return Chart(
+  return TimeChart(
     chartType: chartType,
     width: 300,
     height: 400,

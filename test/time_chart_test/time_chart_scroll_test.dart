@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_chart/src/chart.dart';
 import 'package:time_chart/src/components/scroll/my_single_child_scroll_view.dart';
 import 'package:time_chart/time_chart.dart';
 
@@ -52,7 +51,7 @@ void main() {
       ));
       await tester.pump();
 
-      final ChartState chartState = getChartState(tester);
+      final TimeChartState chartState = getChartState(tester);
       final scrollViewFinder = find.byType(MySingleChildScrollView);
 
       expect(chartState.topHour, 20);

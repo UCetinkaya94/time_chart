@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/painter/chart_engine.dart';
 import '../../../time_chart.dart';
-import '../../chart.dart';
 import 'time_assistant.dart' as time_assistant;
 
 /// 0
@@ -30,7 +29,7 @@ const String _kNotSortedDataErrorMessage =
 mixin TimeDataProcessor {
   static const Duration _oneDayDuration = Duration(days: 1);
 
-  /// 현재 [Chart]의 상태에 맞게 가공된 데이터를 반환한다.
+  /// 현재 [TimeChart]의 상태에 맞게 가공된 데이터를 반환한다.
   ///
   /// [bottomHour]와 24시 사이에 있는 데이터들을 다음날로 넘어가 있다.
   List<DateTimeRange> get processedData => _processedData;
@@ -53,7 +52,7 @@ mixin TimeDataProcessor {
   bool get firstDataHasChanged => _firstDataHasChanged;
   bool _firstDataHasChanged = false;
 
-  void processData(Chart chart, DateTime renderEndTime) {
+  void processData(TimeChart chart, DateTime renderEndTime) {
     if (chart.data.isEmpty) {
       _handleEmptyData(chart);
       return;
@@ -74,7 +73,7 @@ mixin TimeDataProcessor {
     }
   }
 
-  void _handleEmptyData(Chart chart) {
+  void _handleEmptyData(TimeChart chart) {
     switch (chart.chartType) {
       case ChartType.time:
         _topHour = chart.defaultPivotHour;

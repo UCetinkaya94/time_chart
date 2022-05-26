@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_chart/src/chart.dart';
+import 'package:time_chart/src/time_chart.dart';
 import 'package:time_chart/time_chart.dart';
 
 import 'data_pool.dart';
@@ -34,7 +34,7 @@ void main() {
     );
 
     await expectLater(
-      find.byType(Chart),
+      find.byType(TimeChart),
       matchesGoldenFile('golden/data1_chart.png'),
       skip: !Platform.isMacOS,
     );
@@ -43,7 +43,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     await expectLater(
-      find.byType(Chart),
+      find.byType(TimeChart),
       matchesGoldenFile('golden/data2_chart.png'),
       skip: !Platform.isMacOS,
     );
