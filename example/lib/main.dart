@@ -8,38 +8,6 @@ void main() => runApp(MyApp());
 class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 
-  // Data must be sorted.
-  final smallDataList = [
-    DateTimeRange(
-      start: DateTime(2021, 2, 24, 23, 15),
-      end: DateTime(2021, 2, 25, 7, 30),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 2, 22, 1, 55),
-      end: DateTime(2021, 2, 22, 9, 12),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 2, 20, 0, 25),
-      end: DateTime(2021, 2, 20, 7, 34),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 2, 17, 21, 23),
-      end: DateTime(2021, 2, 18, 4, 52),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 2, 13, 6, 32),
-      end: DateTime(2021, 2, 13, 13, 12),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 2, 1, 9, 32),
-      end: DateTime(2021, 2, 1, 15, 22),
-    ),
-    DateTimeRange(
-      start: DateTime(2021, 1, 22, 12, 10),
-      end: DateTime(2021, 1, 22, 16, 20),
-    ),
-  ];
-
   List<DateTimeRange> getRandomSampleDataList() {
     final List<DateTimeRange> list = [];
     final random = Random();
@@ -64,6 +32,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     const sizedBox = SizedBox(height: 16);
 
+    final date = DateTime(2021, 2, 26);
+
+    // Data must be sorted.
+    var smallDataList = [
+      for (int i = 0; i < 21; i++)
+        DateTimeRange(
+          start: date.add(Duration(days: i)),
+          end: date.add(Duration(days: i, minutes: 20 * i)),
+        ),
+    ];
+
+    smallDataList = smallDataList.reversed.toList();
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Time chart example app')),
@@ -72,18 +53,6 @@ class MyApp extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                const Text('Weekly time chart'),
-                TimeChart(
-                  data: bigDataList,
-                  viewMode: ViewMode.weekly,
-                ),
-                sizedBox,
-                const Text('Monthly time chart'),
-                TimeChart(
-                  data: bigDataList,
-                  viewMode: ViewMode.monthly,
-                ),
-                sizedBox,
                 const Text('Weekly amount chart'),
                 TimeChart(
                   data: smallDataList,

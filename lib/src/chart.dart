@@ -388,7 +388,6 @@ class ChartState extends State<Chart>
     final int viewModeLimitDay = widget.viewMode.dayCount;
     final key = ValueKey((topHour ?? 0) + (bottomHour ?? 1) * 100);
 
-    final double outerHeight = kTimeChartTopPadding + widget.height;
     final double yLabelWidth = _getRightMargin(context);
     final double totalWidth = widget.width;
 
@@ -408,86 +407,100 @@ class ChartState extends State<Chart>
       child: Stack(
         alignment: Alignment.topLeft,
         children: [
-          // # #
-          // # #
+          _buildYAxis(totalWidth, key),
+          _buildBorder(totalWidth, yLabelWidth, key, innerSize, context),
+          _buildBars(totalWidth, yLabelWidth, key, innerSize),
+        ],
+      ),
+    );
+  }
+
+  Positioned _buildBars(
+    double totalWidth,
+    double yLabelWidth,
+    ValueKey<int> key,
+    Size innerSize,
+  ) {
+    return Positioned(
+      top: kTimeChartTopPadding,
+      child: Stack(
+        children: [
           SizedBox(
-            width: totalWidth,
-            height: outerHeight,
+            width: totalWidth - yLabelWidth,
+            height: widget.height - kXLabelHeight,
           ),
           _buildAnimatedBox(
-            topPadding: kTimeChartTopPadding,
-            width: totalWidth,
-            builder: (context, topPosition) => CustomPaint(
+            bottomPadding: kXLabelHeight,
+            width: totalWidth - yLabelWidth,
+            child: _buildHorizontalScrollView(
               key: key,
-              size: Size(totalWidth, double.infinity),
-              painter: _buildYLabelPainter(context, topPosition),
-            ),
-          ),
-          //-----
-          // # .
-          // # .
-          Positioned(
-            top: kTimeChartTopPadding,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                SizedBox(
-                  width: totalWidth - yLabelWidth,
-                  height: widget.height,
+              controller: _barController,
+              child: CanvasTouchDetector(
+                gesturesToOverride: const [
+                  GestureType.onTapUp,
+                  GestureType.onLongPressStart,
+                  GestureType.onLongPressMoveUpdate,
+                ],
+                builder: (context) => CustomPaint(
+                  size: innerSize,
+                  painter: _buildBarPainter(context),
                 ),
-                const Positioned.fill(
-                  child: CustomPaint(painter: BorderLinePainter()),
-                ),
-                Positioned.fill(
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: _handleScrollNotification,
-                    child: _buildHorizontalScrollView(
-                      key: key,
-                      controller: _xLabelController,
-                      child: CustomPaint(
-                        size: innerSize,
-                        painter: _buildXLabelPainter(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          //-----
-          // # .
-          // . .
-          Positioned(
-            top: kTimeChartTopPadding,
-            child: Stack(
-              children: [
-                SizedBox(
-                  width: totalWidth - yLabelWidth,
-                  height: widget.height - kXLabelHeight,
-                ),
-                _buildAnimatedBox(
-                  bottomPadding: kXLabelHeight,
-                  width: totalWidth - yLabelWidth,
-                  child: _buildHorizontalScrollView(
-                    key: key,
-                    controller: _barController,
-                    child: CanvasTouchDetector(
-                      gesturesToOverride: const [
-                        GestureType.onTapUp,
-                        GestureType.onLongPressStart,
-                        GestureType.onLongPressMoveUpdate,
-                      ],
-                      builder: (context) => CustomPaint(
-                        size: innerSize,
-                        painter: _buildBarPainter(context),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Positioned _buildBorder(
+    double totalWidth,
+    double yLabelWidth,
+    ValueKey<int> key,
+    Size innerSize,
+    BuildContext context,
+  ) {
+    return Positioned(
+      top: kTimeChartTopPadding,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          SizedBox(
+            width: totalWidth - yLabelWidth,
+            height: widget.height,
+          ),
+          const Positioned.fill(
+            child: CustomPaint(painter: BorderLinePainter()),
+          ),
+          Positioned.fill(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: _handleScrollNotification,
+              child: _buildHorizontalScrollView(
+                key: key,
+                controller: _xLabelController,
+                child: CustomPaint(
+                  size: innerSize,
+                  painter: _buildXLabelPainter(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYAxis(
+    double totalWidth,
+    Key key,
+  ) {
+    return _buildAnimatedBox(
+      topPadding: kTimeChartTopPadding,
+      width: totalWidth,
+      builder: (context, topPosition) => CustomPaint(
+        key: key,
+        size: Size(totalWidth, double.infinity),
+        painter: _buildYLabelPainter(context, topPosition),
       ),
     );
   }
