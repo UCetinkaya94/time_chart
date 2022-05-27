@@ -15,7 +15,6 @@ import 'components/scroll/custom_scroll_physics.dart';
 import 'components/scroll/my_single_child_scroll_view.dart';
 import 'components/painter/chart_engine.dart';
 import 'components/utils/time_assistant.dart';
-import 'components/utils/time_data_processor.dart';
 import 'components/painter/amount_chart/amount_bar_painter.dart';
 import 'components/tooltip/tooltip_overlay.dart';
 import 'components/tooltip/tooltip_size.dart';
@@ -124,7 +123,7 @@ class DurationChart extends StatefulWidget {
 }
 
 class DurationChartState extends State<DurationChart>
-    with TickerProviderStateMixin, TimeDataProcessor {
+    with TickerProviderStateMixin {
   static const Duration _tooltipFadeInDuration = Duration(milliseconds: 150);
   static const Duration _tooltipFadeOutDuration = Duration(milliseconds: 75);
 
@@ -158,6 +157,9 @@ class DurationChartState extends State<DurationChart>
 
   double _previousScrollOffset = 0;
 
+  int _topHour = 0;
+  late final int _dayCount = widget.data.length;
+
   @override
   void initState() {
     super.initState();
@@ -187,7 +189,11 @@ class DurationChartState extends State<DurationChart>
 
     _addScrollNotifier();
 
-    processData(widget, _getFirstItemDate());
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      setState(() {
+        _topHour = _getMaxHour();
+      });
+    });
   }
 
   @override
@@ -195,7 +201,7 @@ class DurationChartState extends State<DurationChart>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.data != widget.data) {
-      processData(widget, _getFirstItemDate());
+      _topHour = _getMaxHour();
     }
   }
 
@@ -206,16 +212,10 @@ class DurationChartState extends State<DurationChart>
     _xLabelController.dispose();
     _sizeController.dispose();
     _tooltipController.dispose();
-    _cancelTimer();
+    _pivotHourUpdatingTimer?.cancel();
     GestureBinding.instance.pointerRouter
         .removeGlobalRoute(_handlePointerEvent);
     super.dispose();
-  }
-
-  DateTime _getFirstItemDate({Duration addition = Duration.zero}) {
-    return widget.data.isEmpty
-        ? DateTime.now()
-        : widget.data.first.end.dateWithoutTime().add(addition);
   }
 
   void _addScrollNotifier() {
@@ -335,7 +335,7 @@ class DurationChartState extends State<DurationChart>
         child: TooltipOverlay(
           backgroundColor: widget.tooltipBackgroundColor,
           chartType: chartType,
-          bottomHour: bottomHour,
+          bottomHour: 0,
           timeRange: range,
           amountHour: amount,
           amountDate: amountDate,
@@ -353,10 +353,6 @@ class DurationChartState extends State<DurationChart>
     _tooltipHideTimer = null;
     _overlayEntry?.remove();
     _overlayEntry = null;
-  }
-
-  void _cancelTimer() {
-    _pivotHourUpdatingTimer?.cancel();
   }
 
   double _getRightMargin(BuildContext context) {
@@ -381,21 +377,27 @@ class DurationChartState extends State<DurationChart>
 
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification is ScrollStartNotification) {
-      _cancelTimer();
+      _pivotHourUpdatingTimer?.cancel();
     } else if (notification is ScrollEndNotification) {
       _pivotHourUpdatingTimer = Timer(
-        const Duration(milliseconds: 450),
+        const Duration(milliseconds: 100),
         _timerCallback,
       );
     }
     return true;
   }
 
-  late int prevTopHour = 30; // TODO topHour!;
-  late int prevMinHour = bottomHour!;
-
   void _timerCallback() {
-    final prevFirstDataHasChanged = firstDataHasChanged;
+    final currentMax = _getMaxHour();
+    final temp = _topHour;
+
+    _topHour = _getMaxHour();
+    _runAmountHeightAnimation(temp, currentMax);
+    _topHour = currentMax;
+  }
+
+  int _getMaxHour() {
+    if (!_barController.hasClients) return 8;
 
     final rightIndex = getRightMostVisibleIndex(
       _barController.position,
@@ -404,7 +406,7 @@ class DurationChartState extends State<DurationChart>
 
     final leftIndex = getLeftMostVisibleIndex(
       rightIndex,
-      dayCount!,
+      _dayCount,
       widget.viewMode.dayCount,
     );
 
@@ -415,39 +417,14 @@ class DurationChartState extends State<DurationChart>
     int currentMax = 0;
 
     for (final item in visibleItems) {
-      final h = item.durationInHours.ceil();
+      final hours = item.durationInHours.ceil();
 
-      if (h > currentMax) {
-        currentMax = h;
+      if (hours > currentMax) {
+        currentMax = hours;
       }
     }
 
-    print('new max: $currentMax');
-
-    final needsToAdaptScrollPosition = rightIndex > 0 && firstDataHasChanged;
-
-    final scrollPositionDuration = Duration(
-      days: -rightIndex.toInt() + (needsToAdaptScrollPosition ? 1 : 0),
-    );
-
-    processData(widget, _getFirstItemDate(addition: scrollPositionDuration));
-
-    topHour = currentMax;
-
-    //if (topHour == prevMaxHour && bottomHour == prevMinHour) return;
-
-    if (prevFirstDataHasChanged != firstDataHasChanged) {
-      // When a day is added or removed, it is a value to resolve the difference occurring in the x-axis direction.
-      final add = firstDataHasChanged ? _totalBarWidth! : -_totalBarWidth!;
-
-      _barController.jumpTo(_barController.position.pixels + add);
-      _scrollPhysics!.addPanDownPixels(add);
-      _scrollPhysics!.setDayCount(dayCount!);
-    }
-
-    _runAmountHeightAnimation(prevTopHour, currentMax);
-
-    prevTopHour = currentMax;
+    return currentMax;
   }
 
   double get heightWithoutLabel => widget.height - kXLabelHeight;
@@ -471,7 +448,7 @@ class DurationChartState extends State<DurationChart>
       builder: (context, constraints) {
         final actualWidth = widget.width ?? constraints.maxWidth;
         final viewModeLimitDay = widget.viewMode.dayCount;
-        final key = ValueKey((topHour ?? 0) + (bottomHour ?? 1) * 100);
+        final key = ValueKey(_topHour * 100);
 
         final yLabelWidth = _getRightMargin(context);
         final totalWidth = widget.width ?? constraints.maxWidth;
@@ -479,14 +456,14 @@ class DurationChartState extends State<DurationChart>
         _totalBarWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
 
         final innerSize = Size(
-          _totalBarWidth! * max(dayCount!, viewModeLimitDay),
+          _totalBarWidth! * max(_dayCount, viewModeLimitDay),
           double.infinity,
         );
 
         _scrollPhysics ??= CustomScrollPhysics(
           blockWidth: _totalBarWidth!,
           viewMode: widget.viewMode,
-          scrollPhysicsState: ScrollPhysicsState(dayCount: dayCount!),
+          scrollPhysicsState: ScrollPhysicsState(dayCount: _dayCount),
         );
 
         return SizedBox(
@@ -508,8 +485,8 @@ class DurationChartState extends State<DurationChart>
                       painter: AmountYLabelPainter(
                         context: context,
                         viewMode: widget.viewMode,
-                        topHour: topHour!,
-                        bottomHour: bottomHour!,
+                        topHour: _topHour,
+                        bottomHour: 0,
                       ),
                     ),
                   ),
@@ -665,10 +642,10 @@ class DurationChartState extends State<DurationChart>
       repaint: _scrollOffsetNotifier,
       context: context,
       viewMode: widget.viewMode,
-      firstValueDateTime: processedData.isEmpty
+      firstValueDateTime: widget.data.isEmpty
           ? DateTime.now() //
-          : processedData.first.end,
-      dayCount: dayCount,
+          : widget.data.first.end,
+      dayCount: _dayCount,
     );
   }
 
@@ -677,12 +654,12 @@ class DurationChartState extends State<DurationChart>
       scrollController: _barController,
       repaint: _scrollOffsetNotifier,
       context: context,
-      dataList: processedData,
+      dataList: widget.data,
       barColor: widget.barColor,
-      topHour: topHour!,
-      bottomHour: bottomHour!,
+      topHour: _topHour,
+      bottomHour: 0,
       tooltipCallback: _tooltipCallback,
-      dayCount: dayCount,
+      dayCount: _dayCount,
       viewMode: widget.viewMode,
     );
   }
