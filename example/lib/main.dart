@@ -35,9 +35,13 @@ class MyApp extends StatelessWidget {
 
     final date = DateTime(2021, 2, 26);
 
+    final random = Random();
+
     final from = {
-      for (int i = 0; i < 90; i++)
-        date.add(Duration(days: i)): Duration(minutes: 20 * i)
+      for (int i = 0; i < 30; i++)
+        date.add(Duration(days: i)): Duration(minutes: random.nextInt(6 * 60)),
+      for (int i = 30; i < 60; i++)
+        date.add(Duration(days: i)): Duration(minutes: random.nextInt(3 * 60)),
     };
 
     int compare(DateTime a, DateTime b) {
