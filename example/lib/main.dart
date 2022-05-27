@@ -37,10 +37,16 @@ class MyApp extends StatelessWidget {
     // Data must be sorted.
     var smallDataList = [
       for (int i = 0; i < 90; i++)
-        DateTimeRange(
-          start: date.add(Duration(days: i)),
-          end: date.add(Duration(days: i, minutes: 20 * i)),
-        ),
+        if (!(date.add(Duration(days: i)).day == 28))
+          DateTimeRange(
+            start: date.add(Duration(days: i)),
+            end: date.add(Duration(days: i, minutes: 20 * (1 + i))),
+          )
+        else
+          DateTimeRange(
+            start: date.add(Duration(days: i)),
+            end: date.add(Duration(days: i, minutes: 20)),
+          )
     ];
 
     smallDataList = smallDataList.reversed.toList();
@@ -54,17 +60,15 @@ class MyApp extends StatelessWidget {
             child: Column(
               children: [
                 const Text('Weekly amount chart'),
-                TimeChart(
+                DurationChart(
                   data: smallDataList,
-                  chartType: ChartType.amount,
                   viewMode: ViewMode.weekly,
                   barColor: Colors.deepPurple,
                 ),
                 sizedBox,
                 const Text('Monthly amount chart'),
-                TimeChart(
+                DurationChart(
                   data: smallDataList,
-                  chartType: ChartType.amount,
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
                 ),

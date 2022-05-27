@@ -24,13 +24,12 @@ class _MockTimeDataProcessor with TimeDataProcessor {
   }
 }
 
-TimeChart _getChart(
+DurationChart _getChart(
   List<DateTimeRange> data, {
   int defaultPivotHour = 18,
   ChartType chartType = ChartType.time,
 }) {
-  return TimeChart(
-    chartType: chartType,
+  return DurationChart(
     width: 300,
     height: 400,
     data: data,

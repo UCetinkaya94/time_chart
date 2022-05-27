@@ -10,16 +10,13 @@ import 'package:touchable/touchable.dart';
 import '../time_chart.dart';
 import 'components/painter/amount_chart/amount_x_label_painter.dart';
 import 'components/painter/amount_chart/amount_y_label_painter.dart';
-import 'components/painter/time_chart/time_x_label_painter.dart';
 import 'components/painter/border_line_painter.dart';
 import 'components/scroll/custom_scroll_physics.dart';
 import 'components/scroll/my_single_child_scroll_view.dart';
 import 'components/painter/chart_engine.dart';
-import 'components/painter/time_chart/time_y_label_painter.dart';
 import 'components/utils/time_assistant.dart';
 import 'components/utils/time_data_processor.dart';
 import 'components/painter/amount_chart/amount_bar_painter.dart';
-import 'components/painter/time_chart/time_bar_painter.dart';
 import 'components/tooltip/tooltip_overlay.dart';
 import 'components/tooltip/tooltip_size.dart';
 import 'components/translations/translations.dart';
@@ -28,10 +25,9 @@ import 'components/utils/context_utils.dart';
 /// The padding to prevent cut off the top of the chart.
 const double kTimeChartTopPadding = 4.0;
 
-class TimeChart extends StatefulWidget {
-  const TimeChart({
+class DurationChart extends StatefulWidget {
+  const DurationChart({
     super.key,
-    this.chartType = ChartType.time,
     this.width,
     this.height = 280.0,
     this.barColor,
@@ -45,11 +41,6 @@ class TimeChart extends StatefulWidget {
     this.viewMode = ViewMode.weekly,
     this.defaultPivotHour = 0,
   }) : assert(0 <= defaultPivotHour && defaultPivotHour < 24);
-
-  /// The type of chart.
-  ///
-  /// Default is the [ChartType.time].
-  final ChartType chartType;
 
   /// Total chart width.
   ///
@@ -129,10 +120,10 @@ class TimeChart extends StatefulWidget {
   final int defaultPivotHour;
 
   @override
-  TimeChartState createState() => TimeChartState();
+  DurationChartState createState() => DurationChartState();
 }
 
-class TimeChartState extends State<TimeChart>
+class DurationChartState extends State<DurationChart>
     with TickerProviderStateMixin, TimeDataProcessor {
   static const Duration _tooltipFadeInDuration = Duration(milliseconds: 150);
   static const Duration _tooltipFadeOutDuration = Duration(milliseconds: 75);
@@ -162,9 +153,6 @@ class TimeChartState extends State<TimeChart>
 
   /// The height of the entire chart at the start of the animation
   late double _animationBeginHeight = widget.height;
-
-  /// A height value to start at the correct position at the start of the animation
-  double? _heightForAlignTop;
 
   final ValueNotifier<double> _scrollOffsetNotifier = ValueNotifier(0);
 
@@ -203,7 +191,7 @@ class TimeChartState extends State<TimeChart>
   }
 
   @override
-  void didUpdateWidget(covariant TimeChart oldWidget) {
+  void didUpdateWidget(covariant DurationChart oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.data != widget.data) {
@@ -392,35 +380,61 @@ class TimeChartState extends State<TimeChart>
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
-    if (widget.chartType == ChartType.amount) return false;
     if (notification is ScrollStartNotification) {
       _cancelTimer();
     } else if (notification is ScrollEndNotification) {
-      _pivotHourUpdatingTimer =
-          Timer(const Duration(milliseconds: 800), _timerCallback);
+      _pivotHourUpdatingTimer = Timer(
+        const Duration(milliseconds: 450),
+        _timerCallback,
+      );
     }
     return true;
   }
 
+  late int prevTopHour = 30; // TODO topHour!;
+  late int prevMinHour = bottomHour!;
+
   void _timerCallback() {
     final prevFirstDataHasChanged = firstDataHasChanged;
-    final prevMaxHour = topHour;
-    final prevMinHour = bottomHour;
 
-    final barIndex = getCurrentBarIndex(
+    final rightIndex = getRightMostVisibleIndex(
       _barController.position,
       _totalBarWidth!,
-    ).toInt();
+    );
 
-    final needsToAdaptScrollPosition = barIndex > 0 && firstDataHasChanged;
+    final leftIndex = getLeftMostVisibleIndex(
+      rightIndex,
+      dayCount!,
+      widget.viewMode.dayCount,
+    );
+
+    final visibleItems = widget.data
+        .getRange(rightIndex.toInt(), leftIndex.toInt() + 1)
+        .toList();
+
+    int currentMax = 0;
+
+    for (final item in visibleItems) {
+      final h = item.durationInHours.ceil();
+
+      if (h > currentMax) {
+        currentMax = h;
+      }
+    }
+
+    print('new max: $currentMax');
+
+    final needsToAdaptScrollPosition = rightIndex > 0 && firstDataHasChanged;
 
     final scrollPositionDuration = Duration(
-      days: -barIndex + (needsToAdaptScrollPosition ? 1 : 0),
+      days: -rightIndex.toInt() + (needsToAdaptScrollPosition ? 1 : 0),
     );
 
     processData(widget, _getFirstItemDate(addition: scrollPositionDuration));
 
-    if (topHour == prevMaxHour && bottomHour == prevMinHour) return;
+    topHour = currentMax;
+
+    //if (topHour == prevMaxHour && bottomHour == prevMinHour) return;
 
     if (prevFirstDataHasChanged != firstDataHasChanged) {
       // When a day is added or removed, it is a value to resolve the difference occurring in the x-axis direction.
@@ -431,30 +445,22 @@ class TimeChartState extends State<TimeChart>
       _scrollPhysics!.setDayCount(dayCount!);
     }
 
-    _runHeightAnimation(prevMaxHour!, prevMinHour!);
+    _runAmountHeightAnimation(prevTopHour, currentMax);
+
+    prevTopHour = currentMax;
   }
 
   double get heightWithoutLabel => widget.height - kXLabelHeight;
 
-  void _runHeightAnimation(int beforeTopHour, int beforeBottomHour) {
-    final beforeDiff =
-        hourDiffBetween(beforeTopHour, beforeBottomHour).toDouble();
-    final currentDiff = hourDiffBetween(topHour, bottomHour).toDouble();
+  void _runAmountHeightAnimation(int prevTopHour, int currentTopHour) {
+    if (prevTopHour == currentTopHour) return;
 
-    final candidateUpward = diffBetween(beforeTopHour, topHour!);
-    final candidateDownWard = -diffBetween(topHour!, beforeTopHour);
-
-    // (candidate) select one that falls within the current top-bottom hour range
-    final topDiff =
-        isDirUpward(beforeTopHour, beforeBottomHour, topHour!, bottomHour!)
-            ? candidateUpward
-            : candidateDownWard;
+    final prevDif = prevTopHour.toDouble();
+    final currentDiff = currentTopHour.toDouble();
 
     setState(() {
       _animationBeginHeight =
-          (currentDiff / beforeDiff) * heightWithoutLabel + kXLabelHeight;
-      _heightForAlignTop = (_animationBeginHeight - widget.height) / 2 +
-          (topDiff / beforeDiff) * heightWithoutLabel;
+          (currentDiff / prevDif) * heightWithoutLabel + kXLabelHeight;
     });
     _sizeController.reverse(from: 1.0);
   }
@@ -486,15 +492,37 @@ class TimeChartState extends State<TimeChart>
         return SizedBox(
           height: widget.height + kTimeChartTopPadding,
           width: actualWidth,
-          child: GestureDetector(
-            onPanDown: _handlePanDown,
-            child: Stack(
-              alignment: Alignment.topLeft,
-              children: [
-                _buildYAxis(totalWidth, key),
-                _buildBorder(totalWidth, yLabelWidth, key, innerSize, context),
-                _buildBars(totalWidth, yLabelWidth, key, innerSize),
-              ],
+          child: ClipRRect(
+            child: GestureDetector(
+              onPanDown: _handlePanDown,
+              child: Stack(
+                alignment: Alignment.topLeft,
+                children: [
+                  _buildAnimatedBox(
+                    topPadding: kTimeChartTopPadding,
+                    width: totalWidth,
+                    alignment: Alignment.topCenter,
+                    child: CustomPaint(
+                      key: key,
+                      size: Size(totalWidth, double.infinity),
+                      painter: AmountYLabelPainter(
+                        context: context,
+                        viewMode: widget.viewMode,
+                        topHour: topHour!,
+                        bottomHour: bottomHour!,
+                      ),
+                    ),
+                  ),
+                  _buildBorder(
+                    totalWidth,
+                    yLabelWidth,
+                    key,
+                    innerSize,
+                    context,
+                  ),
+                  _buildBars(totalWidth, yLabelWidth, key, innerSize),
+                ],
+              ),
             ),
           ),
         );
@@ -519,6 +547,7 @@ class TimeChartState extends State<TimeChart>
           _buildAnimatedBox(
             bottomPadding: kXLabelHeight,
             width: totalWidth - yLabelWidth,
+            alignment: Alignment.bottomCenter,
             child: _buildHorizontalScrollView(
               key: key,
               controller: _barController,
@@ -577,21 +606,6 @@ class TimeChartState extends State<TimeChart>
     );
   }
 
-  Widget _buildYAxis(
-    double totalWidth,
-    Key key,
-  ) {
-    return _buildAnimatedBox(
-      topPadding: kTimeChartTopPadding,
-      width: totalWidth,
-      builder: (context, topPosition) => CustomPaint(
-        key: key,
-        size: Size(totalWidth, double.infinity),
-        painter: _buildYLabelPainter(context, topPosition),
-      ),
-    );
-  }
-
   Widget _buildHorizontalScrollView({
     required Widget child,
     required Key key,
@@ -616,42 +630,28 @@ class TimeChartState extends State<TimeChart>
   }
 
   Widget _buildAnimatedBox({
-    Widget? child,
+    required Widget child,
     required double width,
     double topPadding = 0.0,
     double bottomPadding = 0.0,
-    Function(BuildContext, double)? builder,
+    required Alignment alignment,
   }) {
-    assert(
-        (child != null && builder == null) || child == null && builder != null);
-
     final heightAnimation = Tween<double>(
       begin: widget.height,
       end: _animationBeginHeight,
-    ).animate(_sizeAnimation);
-    final heightForAlignTopAnimation = Tween<double>(
-      begin: 0,
-      end: _heightForAlignTop,
     ).animate(_sizeAnimation);
 
     return AnimatedBuilder(
       animation: _sizeAnimation,
       builder: (context, child) {
-        final topPosition = (widget.height - heightAnimation.value) / 2 +
-            heightForAlignTopAnimation.value +
-            topPadding;
         return Positioned(
           right: 0,
-          top: topPosition,
+          bottom: 0,
           child: Container(
             height: heightAnimation.value - bottomPadding,
             width: width,
-            alignment: Alignment.center,
-            child: child ??
-                builder!(
-                  context,
-                  topPosition - kTimeChartTopPadding,
-                ),
+            alignment: alignment,
+            child: child,
           ),
         );
       },
@@ -659,81 +659,31 @@ class TimeChartState extends State<TimeChart>
     );
   }
 
-  CustomPainter _buildYLabelPainter(BuildContext context, double topPosition) {
-    switch (widget.chartType) {
-      case ChartType.time:
-        return TimeYLabelPainter(
-          context: context,
-          viewMode: widget.viewMode,
-          topHour: topHour!,
-          bottomHour: bottomHour!,
-          chartHeight: widget.height,
-          topPosition: topPosition,
-        );
-      case ChartType.amount:
-        return AmountYLabelPainter(
-          context: context,
-          viewMode: widget.viewMode,
-          topHour: topHour!,
-          bottomHour: bottomHour!,
-        );
-    }
-  }
-
   CustomPainter _buildXLabelPainter(BuildContext context) {
-    final firstValueDateTime =
-        processedData.isEmpty ? DateTime.now() : processedData.first.end;
-    switch (widget.chartType) {
-      case ChartType.time:
-        return TimeXLabelPainter(
-          scrollController: _xLabelController,
-          repaint: _scrollOffsetNotifier,
-          context: context,
-          viewMode: widget.viewMode,
-          firstValueDateTime: firstValueDateTime,
-          dayCount: dayCount,
-          firstDataHasChanged: firstDataHasChanged,
-        );
-      case ChartType.amount:
-        return AmountXLabelPainter(
-          scrollController: _xLabelController,
-          repaint: _scrollOffsetNotifier,
-          context: context,
-          viewMode: widget.viewMode,
-          firstValueDateTime: firstValueDateTime,
-          dayCount: dayCount,
-        );
-    }
+    return AmountXLabelPainter(
+      scrollController: _xLabelController,
+      repaint: _scrollOffsetNotifier,
+      context: context,
+      viewMode: widget.viewMode,
+      firstValueDateTime: processedData.isEmpty
+          ? DateTime.now() //
+          : processedData.first.end,
+      dayCount: dayCount,
+    );
   }
 
   CustomPainter _buildBarPainter(BuildContext context) {
-    switch (widget.chartType) {
-      case ChartType.time:
-        return TimeBarPainter(
-          scrollController: _barController,
-          repaint: _scrollOffsetNotifier,
-          context: context,
-          tooltipCallback: _tooltipCallback,
-          dataList: processedData,
-          barColor: widget.barColor,
-          topHour: topHour!,
-          bottomHour: bottomHour!,
-          dayCount: dayCount,
-          viewMode: widget.viewMode,
-        );
-      case ChartType.amount:
-        return AmountBarPainter(
-          scrollController: _barController,
-          repaint: _scrollOffsetNotifier,
-          context: context,
-          dataList: processedData,
-          barColor: widget.barColor,
-          topHour: topHour!,
-          bottomHour: bottomHour!,
-          tooltipCallback: _tooltipCallback,
-          dayCount: dayCount,
-          viewMode: widget.viewMode,
-        );
-    }
+    return AmountBarPainter(
+      scrollController: _barController,
+      repaint: _scrollOffsetNotifier,
+      context: context,
+      dataList: processedData,
+      barColor: widget.barColor,
+      topHour: topHour!,
+      bottomHour: bottomHour!,
+      tooltipCallback: _tooltipCallback,
+      dayCount: dayCount,
+      viewMode: widget.viewMode,
+    );
   }
 }

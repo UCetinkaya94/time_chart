@@ -5,12 +5,6 @@ import 'package:time_chart/src/components/painter/chart_engine.dart';
 import '../../../time_chart.dart';
 import 'time_assistant.dart' as time_assistant;
 
-/// 0
-const double _kMinHour = 0.0;
-
-/// 24
-const double _kMaxHour = 24.0;
-
 const String _kNotSortedDataErrorMessage =
     'The data list is reversed or not sorted. Check the data parameter. The first data must be newest data.';
 
@@ -29,7 +23,7 @@ const String _kNotSortedDataErrorMessage =
 mixin TimeDataProcessor {
   static const Duration _oneDayDuration = Duration(days: 1);
 
-  /// 현재 [TimeChart]의 상태에 맞게 가공된 데이터를 반환한다.
+  /// 현재 [DurationChart]의 상태에 맞게 가공된 데이터를 반환한다.
   ///
   /// [bottomHour]와 24시 사이에 있는 데이터들을 다음날로 넘어가 있다.
   List<DateTimeRange> get processedData => _processedData;
@@ -46,13 +40,16 @@ mixin TimeDataProcessor {
   int? get dayCount => _dayCount;
   int? _dayCount;
 
+  set topHour(int? value) => _topHour = value;
+
   /// 첫 데이터가 [bottomHour]에 의해 다음날로 넘겨진 경우 `true` 이다.
   ///
   /// 이때 [dayCount]가 7 이상이어야 한다.
   bool get firstDataHasChanged => _firstDataHasChanged;
   bool _firstDataHasChanged = false;
 
-  void processData(TimeChart chart, DateTime renderEndTime) {
+  void processData(DurationChart chart, DateTime renderEndTime,
+      [int? leftIndex, int? rightIndex]) {
     if (chart.data.isEmpty) {
       _handleEmptyData(chart);
       return;
@@ -63,65 +60,13 @@ mixin TimeDataProcessor {
     _firstDataHasChanged = false;
     _countDays(chart.data);
     _generateInRangeDataList(chart.data, chart.viewMode, renderEndTime);
-    switch (chart.chartType) {
-      case ChartType.time:
-        _setPivotHours(chart.defaultPivotHour);
-        _processDataUsingBottomHour();
-        break;
-      case ChartType.amount:
-        _calcAmountPivotHeights(chart.data);
-    }
+    _calcAmountPivotHeights(chart.data);
   }
 
-  void _handleEmptyData(TimeChart chart) {
-    switch (chart.chartType) {
-      case ChartType.time:
-        _topHour = chart.defaultPivotHour;
-        _bottomHour = _topHour! + 8;
-        break;
-      case ChartType.amount:
-        _topHour = 8;
-        _bottomHour = 0;
-    }
+  void _handleEmptyData(DurationChart chart) {
+    _topHour = 8;
+    _bottomHour = 0;
     _dayCount = 0;
-  }
-
-  void _setPivotHours(int defaultPivotHour) {
-    final timePair = _getPivotHoursFrom(_inRangeDataList);
-    if (timePair == null) return;
-    final startTime = timePair.startTime;
-    final endTime = timePair.endTime;
-
-    // 아래와 같이 범위가 형성된 경우를 고려한다.
-    // |##|
-    // |##| -> endTime
-    //
-    // |##| -> startTime
-    // |##|
-    if (startTime.floor() == endTime.floor() && endTime < startTime) {
-      _topHour = startTime.floor();
-      _bottomHour = startTime.floor();
-      return;
-    }
-
-    _topHour = startTime.floor();
-    _bottomHour = endTime.ceil();
-    if (_topHour! % 2 != _bottomHour! % 2) {
-      _topHour = hourDiffBetween(1, _topHour).toInt();
-    }
-    _topHour = _topHour! % 24;
-    _bottomHour = _bottomHour! % 24;
-    // use default pivot hour if there are no space or the time range is fully visible
-    if (_topHour == _bottomHour) {
-      _topHour = defaultPivotHour;
-      _bottomHour = defaultPivotHour;
-    }
-  }
-
-  bool _isNextDayTime(double timeDouble) {
-    // 제일 아래의 시간이 0시인 경우 해당 블럭은 무조건 해당 시간으로 표시하여야 한다.
-    if (bottomHour == 0) return false;
-    return bottomHour! < timeDouble;
   }
 
   void _countDays(List<DateTimeRange> dataList) {
@@ -177,150 +122,6 @@ mixin TimeDataProcessor {
     }
   }
 
-  /// 종료 시간이 [bottomHour]와 24시 사이에 존재하는 경우 해당 데이터를 다음날로 가공한다.
-  void _processDataUsingBottomHour() {
-    final len = _processedData.length;
-    for (int i = 0; i < len; ++i) {
-      final DateTime startTime = _processedData[i].start;
-      final DateTime endTime = _processedData[i].end;
-      final double startTimeDouble = startTime.toDouble();
-      final double endTimeDouble = endTime.toDouble();
-
-      if (_isNextDayTime(startTimeDouble) && _isNextDayTime(endTimeDouble)) {
-        _processedData.removeAt(i);
-        _processedData.insert(
-          i,
-          DateTimeRange(
-            start: startTime.add(_oneDayDuration),
-            end: endTime.add(_oneDayDuration),
-          ),
-        );
-
-        if (i == 0) {
-          _dayCount = _dayCount! + 1;
-          _firstDataHasChanged = true;
-        }
-      }
-    }
-  }
-
-  /// 시간 그래프의 기준이 될 값들을 구한다.
-  ///
-  /// 시간 데이터가 비어 있는 구간 중 가장 넓은 부분이 선택되며, 선택된 값의 시작 시간이
-  /// [topHour], 종료 시간이 [bottomHour]가 된다.
-  _TimePair? _getPivotHoursFrom(List<DateTimeRange> dataList) {
-    final List<_TimePair> rangeList = _getSortedRangeListFrom(dataList);
-    if (rangeList.isEmpty) return null;
-
-    // 빈 공간 중 범위가 가장 넓은 부분을 찾는다.
-    final len = rangeList.length;
-    _TimePair resultPair =
-        _TimePair(rangeList[0].startTime, rangeList[0].endTime);
-    double maxInterval = 0.0;
-
-    for (int i = 0; i < len; ++i) {
-      final lo = i, hi = (i + 1) % len;
-      final wakeUp = rangeList[lo].endTime;
-      final sleepTime = rangeList[hi].startTime;
-
-      double interval = sleepTime - wakeUp;
-      if (interval < 0) {
-        interval += 24;
-      }
-
-      if (maxInterval < interval) {
-        maxInterval = interval;
-        resultPair = _TimePair(sleepTime, wakeUp);
-      }
-    }
-    return resultPair;
-  }
-
-  /// [double] 형식으로 24시간에 시간 데이터 리스트가 어떻게 분포되어있는지 구간 리스트를 반환한다.
-  ///
-  /// 이 값들은 오름차순으로 정렬되어 있다.
-  List<_TimePair> _getSortedRangeListFrom(List<DateTimeRange> dataList) {
-    List<_TimePair> rangeList = [];
-
-    for (int i = 0; i < dataList.length; ++i) {
-      final curSleepPair =
-          _TimePair(dataList[i].start.toDouble(), dataList[i].end.toDouble());
-
-      // 23시 ~ 6시와 같은 0시를 사이에 둔 경우 0시를 기준으로 두 범위로 나눈다.
-      if (curSleepPair.startTime > curSleepPair.endTime) {
-        final frontPair = _TimePair(_kMinHour, curSleepPair.endTime);
-        final backPair = _TimePair(curSleepPair.startTime, _kMaxHour);
-
-        rangeList = _mergeRange(frontPair, rangeList);
-        rangeList = _mergeRange(backPair, rangeList);
-      } else {
-        rangeList = _mergeRange(curSleepPair, rangeList);
-      }
-    }
-    // 오름차순으로 정렬한다.
-    rangeList.sort((a, b) => a.compareTo(b));
-    return rangeList;
-  }
-
-  /// [hour]이 [rangeList]에 포함되는 리스트가 있는 경우 해당 리스트와 병합하여
-  /// [rangeList]를 반환한다.
-  ///
-  /// 항상 [rangeList]의 값들 중 서로 겹쳐지는 값은 존재하지 않는다.
-  List<_TimePair> _mergeRange(_TimePair timePair, List<_TimePair> rangeList) {
-    int loIdx = -1;
-    int hiIdx = -1;
-
-    // 먼저 [sleepPair]의 안에 포함되는 목록을 제거한다.
-    for (int i = 0; i < rangeList.length; ++i) {
-      final curPair = rangeList[i];
-      if (timePair.inRange(curPair.startTime) &&
-          timePair.inRange(curPair.endTime)) rangeList.removeAt(i--);
-    }
-
-    for (int i = 0; i < rangeList.length; ++i) {
-      final _TimePair curSleepPair =
-          _TimePair(rangeList[i].startTime, rangeList[i].endTime);
-
-      if (loIdx == -1 && curSleepPair.inRange(timePair.startTime)) {
-        loIdx = i;
-      }
-      if (hiIdx == -1 && curSleepPair.inRange(timePair.endTime)) {
-        hiIdx = i;
-      }
-      if (loIdx != -1 && hiIdx != -1) {
-        break;
-      }
-    }
-
-    final newSleepPair = _TimePair(
-        loIdx == -1 ? timePair.startTime : rangeList[loIdx].startTime,
-        hiIdx == -1 ? timePair.endTime : rangeList[hiIdx].endTime);
-
-    // 겹치는 부분을 제거한다.
-    // 1. 이미 존재하는 것에 완전히 포함되는 경우
-    if (loIdx != -1 && loIdx == hiIdx) {
-      rangeList.removeAt(loIdx);
-    } // 각 다른 것에 겹치는 경우
-    else {
-      if (loIdx != -1) {
-        rangeList.removeAt(loIdx);
-        if (loIdx < hiIdx) --hiIdx;
-      }
-      if (hiIdx != -1) rangeList.removeAt(hiIdx);
-    }
-
-    for (int i = 0; i < rangeList.length; ++i) {
-      final curSleepPair = rangeList[i];
-      if (newSleepPair.inRange(curSleepPair.startTime) &&
-          newSleepPair.inRange(curSleepPair.endTime)) {
-        rangeList.remove(curSleepPair);
-      }
-    }
-
-    rangeList.add(newSleepPair);
-    return rangeList;
-  }
-
   void _calcAmountPivotHeights(List<DateTimeRange> dataList) {
     const double infinity = 10000.0;
     final int len = dataList.length;
@@ -358,28 +159,4 @@ mixin TimeDataProcessor {
     if (c <= 0) return 24.0 + c;
     return c;
   }
-}
-
-class _TimePair implements Comparable {
-  /// [double] 타입으로 이루어진 시작 시간과 끝 시간을 가진 클래스를 생성한다.
-  const _TimePair(this._startTime, this._endTime);
-
-  final double _startTime;
-  final double _endTime;
-
-  double get startTime => _startTime;
-
-  double get endTime => _endTime;
-
-  bool inRange(double a) => _startTime <= a && a <= _endTime;
-
-  @override
-  int compareTo(other) {
-    if (_startTime < other.startTime) return -1;
-    if (_startTime > other.startTime) return 1;
-    return 0;
-  }
-
-  @override
-  String toString() => 'startTime: $startTime, wakeUp: $endTime';
 }

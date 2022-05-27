@@ -17,7 +17,7 @@ void main() {
           builder: (context, setState) {
             return Column(
               children: [
-                TimeChart(data: data),
+                DurationChart(data: data),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -34,7 +34,7 @@ void main() {
     );
 
     await expectLater(
-      find.byType(TimeChart),
+      find.byType(DurationChart),
       matchesGoldenFile('golden/data1_chart.png'),
       skip: !Platform.isMacOS,
     );
@@ -43,7 +43,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     await expectLater(
-      find.byType(TimeChart),
+      find.byType(DurationChart),
       matchesGoldenFile('golden/data2_chart.png'),
       skip: !Platform.isMacOS,
     );

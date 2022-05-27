@@ -11,7 +11,7 @@ void main() {
       tester.binding.window.physicalSizeTestValue = const Size(400, 800);
 
       await tester.pumpWidget(MaterialApp(
-        home: TimeChart(
+        home: DurationChart(
           data: [
             DateTimeRange(
               start: DateTime(2021, 10, 22, 23, 55),
@@ -51,7 +51,7 @@ void main() {
       ));
       await tester.pump();
 
-      final TimeChartState chartState = getChartState(tester);
+      final DurationChartState chartState = getChartState(tester);
       final scrollViewFinder = find.byType(MySingleChildScrollView);
 
       expect(chartState.topHour, 20);

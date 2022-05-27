@@ -58,7 +58,7 @@ class CustomScrollPhysics extends ScrollPhysics {
       ScrollPosition position, Tolerance tolerance, double velocity) {
     final double dayLimit = viewMode.dayCount.toDouble();
     final double startBlock = scrollPhysicsState.pixels / blockWidth;
-    double bar = getCurrentBarIndex(position, blockWidth);
+    double bar = getRightMostVisibleIndex(position, blockWidth);
 
     if (velocity.abs() > _kPivotVelocity) {
       if (velocity < -tolerance.velocity) {
@@ -108,6 +108,18 @@ class CustomScrollPhysics extends ScrollPhysics {
   bool get allowImplicitScrolling => false;
 }
 
-double getCurrentBarIndex(ScrollPosition position, double itemDimension) {
-  return position.pixels / itemDimension;
+/// Returns the index of the left most visible bar
+double getRightMostVisibleIndex(ScrollPosition position, double itemWidth) {
+  return (position.pixels / itemWidth).roundToDouble();
+}
+
+/// Returns the index of the right most visible bar
+double getLeftMostVisibleIndex(
+  double rightIndex,
+  int totalItemCount,
+  int visibleItemCount,
+) {
+  final leftIndex = rightIndex + (visibleItemCount - 1);
+  // handle out of bounds
+  return min(leftIndex.roundToDouble(), totalItemCount - 1.0);
 }
