@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
@@ -14,7 +15,6 @@ import 'components/painter/border_line_painter.dart';
 import 'components/scroll/custom_scroll_physics.dart';
 import 'components/scroll/my_single_child_scroll_view.dart';
 import 'components/painter/chart_engine.dart';
-import 'components/utils/time_assistant.dart';
 import 'components/painter/amount_chart/amount_bar_painter.dart';
 import 'components/tooltip/tooltip_overlay.dart';
 import 'components/tooltip/tooltip_size.dart';
@@ -56,15 +56,10 @@ class DurationChart extends StatefulWidget {
   /// Default is the `Theme.of(context).colorScheme.secondary`.
   final Color? barColor;
 
-  /// The list of [DateTimeRange].
+  /// Pair of a date and a duration.
   ///
-  /// The first index is the latest data, The end data is the oldest data.
-  /// It must be sorted because of correctly painting the chart.
-  ///
-  /// ```dart
-  /// assert(data[0].isAfter(data[1])); // true
-  /// ```
-  final List<DateTimeRange> data;
+  /// Using a SplayTreeMap ensures, that the dates are correctly sorted
+  final SplayTreeMap<DateTime, Duration> data;
 
   /// The size animation duration of time chart when is changed pivot hours.
   ///
@@ -158,7 +153,6 @@ class DurationChartState extends State<DurationChart>
   double _previousScrollOffset = 0;
 
   int _topHour = 0;
-  late final int _dayCount = widget.data.length;
 
   @override
   void initState() {
@@ -406,18 +400,19 @@ class DurationChartState extends State<DurationChart>
 
     final leftIndex = getLeftMostVisibleIndex(
       rightIndex,
-      _dayCount,
+      widget.data.length,
       widget.viewMode.dayCount,
     );
 
-    final visibleItems = widget.data
+    final visibleItems = widget.data.values
+        .toList()
         .getRange(rightIndex.toInt(), leftIndex.toInt() + 1)
         .toList();
 
     int currentMax = 0;
 
     for (final item in visibleItems) {
-      final hours = item.durationInHours.ceil();
+      final hours = item.inHours + 1;
 
       if (hours > currentMax) {
         currentMax = hours;
@@ -456,14 +451,16 @@ class DurationChartState extends State<DurationChart>
         _totalBarWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
 
         final innerSize = Size(
-          _totalBarWidth! * max(_dayCount, viewModeLimitDay),
+          _totalBarWidth! * max(widget.data.length, viewModeLimitDay),
           double.infinity,
         );
 
         _scrollPhysics ??= CustomScrollPhysics(
           blockWidth: _totalBarWidth!,
           viewMode: widget.viewMode,
-          scrollPhysicsState: ScrollPhysicsState(dayCount: _dayCount),
+          scrollPhysicsState: ScrollPhysicsState(
+            dayCount: widget.data.length,
+          ),
         );
 
         return SizedBox(
@@ -644,8 +641,8 @@ class DurationChartState extends State<DurationChart>
       viewMode: widget.viewMode,
       firstValueDateTime: widget.data.isEmpty
           ? DateTime.now() //
-          : widget.data.first.end,
-      dayCount: _dayCount,
+          : widget.data.lastKey(),
+      dayCount: widget.data.length,
     );
   }
 
@@ -654,12 +651,12 @@ class DurationChartState extends State<DurationChart>
       scrollController: _barController,
       repaint: _scrollOffsetNotifier,
       context: context,
-      dataList: widget.data,
+      dataMap: widget.data,
       barColor: widget.barColor,
       topHour: _topHour,
       bottomHour: 0,
       tooltipCallback: _tooltipCallback,
-      dayCount: _dayCount,
+      dayCount: widget.data.length,
       viewMode: widget.viewMode,
     );
   }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/* import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/painter/bar_painter.dart';
 import 'package:touchable/touchable.dart';
 import '../../utils/time_assistant.dart' as time_assistant;
@@ -10,7 +10,7 @@ class TimeBarPainter extends BarPainter<TimeBarItem> {
     required super.repaint,
     required super.tooltipCallback,
     required super.context,
-    required super.dataList,
+    required super.dataMap,
     required super.topHour,
     required super.bottomHour,
     required super.dayCount,
@@ -153,25 +153,25 @@ class TimeBarPainter extends BarPainter<TimeBarItem> {
   List<TimeBarItem> generateCoordinates(Size size) {
     final List<TimeBarItem> coordinates = [];
 
-    if (dataList.isEmpty) return [];
+    if (dataMap.isEmpty) return [];
 
     final double intervalOfBars = size.width / dayCount;
     // 제일 아래에 붙은 바가 정각이 아닌 경우 올려 바를 그린다.
     final int pivotBottom = _convertUsing(topHour, bottomHour);
     final int pivotHeight = pivotBottom > topHour ? pivotBottom - topHour : 24;
-    final int length = dataList.length;
+    final int length = dataMap.length;
     final double height = size.height;
     final int viewLimitDay = viewMode.dayCount;
 
     final int dayFromScrollOffset = currentDayFromScrollOffset;
-    final DateTime startDateTime = getBarRenderStartDateTime(dataList);
-    final int startIndex = dataList.getLowerBound(startDateTime);
+    final DateTime startDateTime = getBarRenderStartDateTime(dataMap);
+    final int startIndex = dataMap.getLowerBound(startDateTime);
 
     for (int index = startIndex; index < length; index++) {
-      final wakeUpTimeDouble = dataList[index].end.toDouble();
-      final sleepAmountDouble = dataList[index].durationInHours;
+      final wakeUpTimeDouble = dataMap[index].end.toDouble();
+      final sleepAmountDouble = dataMap[index].durationInHours;
       final barPosition =
-          1 + dataList.first.end.differenceDateInDay(dataList[index].end);
+          1 + dataMap.first.end.differenceDateInDay(dataMap[index].end);
 
       if (barPosition - dayFromScrollOffset >
           viewLimitDay + ChartEngine.toleranceDay * 2) break;
@@ -198,7 +198,7 @@ class TimeBarPainter extends BarPainter<TimeBarItem> {
           _outRangedPivotHour(
               wakeUpTimeDouble - sleepAmountDouble, wakeUpTimeDouble)) continue;
 
-      coordinates.add(TimeBarItem(right, top, bottom, dataList[index]));
+      coordinates.add(TimeBarItem(right, top, bottom, dataMap[index]));
     }
     return coordinates;
   }
@@ -212,3 +212,4 @@ class TimeBarItem {
 
   TimeBarItem(this.dx, this.topY, this.bottomY, this.data);
 }
+ */

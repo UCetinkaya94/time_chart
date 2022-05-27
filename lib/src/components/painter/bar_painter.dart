@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'chart_engine.dart';
@@ -19,18 +21,18 @@ abstract class BarPainter<T> extends ChartEngine {
     required super.viewMode,
     required super.repaint,
     required this.tooltipCallback,
-    required this.dataList,
+    required this.dataMap,
     required this.topHour,
     required this.bottomHour,
     this.barColor,
   }) : super(
           firstValueDateTime:
-              dataList.isEmpty ? DateTime.now() : dataList.first.end,
+              dataMap.isEmpty ? DateTime.now() : dataMap.firstKey(),
         );
 
   final TooltipCallback tooltipCallback;
   final Color? barColor;
-  final List<DateTimeRange> dataList;
+  final SplayTreeMap<DateTime, Duration> dataMap;
   final int topHour;
   final int bottomHour;
 
@@ -48,15 +50,15 @@ abstract class BarPainter<T> extends ChartEngine {
   List<T> generateCoordinates(Size size);
 
   @protected
-  DateTime getBarRenderStartDateTime(List<DateTimeRange> dataList) {
-    return dataList.first.end.add(Duration(
-      days: -currentDayFromScrollOffset + ChartEngine.toleranceDay,
-    ));
+  DateTime getBarRenderStartDateTime() {
+    return dataMap.firstKey()!.subtract(Duration(
+          days: currentDayFromScrollOffset + ChartEngine.toleranceDay,
+        ));
   }
 
   @override
   @nonVirtual
   bool shouldRepaint(BarPainter oldDelegate) {
-    return oldDelegate.dataList != dataList;
+    return oldDelegate.dataMap != dataMap;
   }
 }

@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/painter/bar_painter.dart';
 import 'package:touchable/touchable.dart';
-import '../../utils/time_assistant.dart';
 import '../chart_engine.dart';
 
 class AmountBarPainter extends BarPainter<AmountBarItem> {
@@ -12,7 +11,7 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
     required super.repaint,
     required super.tooltipCallback,
     required super.context,
-    required super.dataList,
+    required super.dataMap,
     required super.topHour,
     required super.bottomHour,
     required super.dayCount,
@@ -70,40 +69,34 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
   List<AmountBarItem> generateCoordinates(Size size) {
     final List<AmountBarItem> coordinates = [];
 
-    if (dataList.isEmpty) return [];
+    if (dataMap.isEmpty) return [];
 
-    final double intervalOfBars = size.width / dayCount;
-    final int length = dataList.length;
-    final int viewLimitDay = viewMode.dayCount;
+    final intervalOfBars = size.width / dayCount;
+
+    final viewLimitDay = viewMode.dayCount;
     final dayFromScrollOffset = currentDayFromScrollOffset;
-    final DateTime startDateTime = getBarRenderStartDateTime(dataList);
-    final int startIndex = dataList.getLowerBound(startDateTime);
 
     double amountSum = 0;
+    int index = 0;
 
-    for (int index = startIndex; index < length; index++) {
-      final int barPosition =
-          1 + dataList.first.end.differenceDateInDay(dataList[index].end);
+    for (final entry in dataMap.entries) {
+      final int barPosition = 1 + index;
 
       if (barPosition - dayFromScrollOffset >
           viewLimitDay + ChartEngine.toleranceDay * 2) break;
 
-      amountSum += dataList[index].durationInHours;
+      amountSum += entry.value.inMinutes / 60;
 
-      // 날짜가 다르거나 마지막 데이터면 오른쪽으로 한 칸 이동하여 그린다. 그 외에는 계속 sum 한다.
-      if (index == length - 1 ||
-          dataList[index].end.differenceDateInDay(dataList[index + 1].end) >
-              0) {
-        final double normalizedTop =
-            max(0, amountSum - bottomHour) / (topHour - bottomHour);
+      final normalizedTop =
+          max(0, amountSum - bottomHour) / (topHour - bottomHour);
 
-        final double dy = size.height - normalizedTop * size.height;
-        final double dx = size.width - intervalOfBars * barPosition;
+      final dy = size.height - normalizedTop * size.height;
+      final dx = size.width - intervalOfBars * barPosition;
 
-        coordinates.add(AmountBarItem(dx, dy, amountSum, dataList[index].end));
+      coordinates.add(AmountBarItem(dx, dy, amountSum, entry.key));
 
-        amountSum = 0;
-      }
+      amountSum = 0;
+      index++;
     }
 
     return coordinates;

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -34,22 +35,20 @@ class MyApp extends StatelessWidget {
 
     final date = DateTime(2021, 2, 26);
 
-    // Data must be sorted.
-    var smallDataList = [
+    final from = {
       for (int i = 0; i < 90; i++)
-        if (!(date.add(Duration(days: i)).day == 28))
-          DateTimeRange(
-            start: date.add(Duration(days: i)),
-            end: date.add(Duration(days: i, minutes: 20 * (1 + i))),
-          )
-        else
-          DateTimeRange(
-            start: date.add(Duration(days: i)),
-            end: date.add(Duration(days: i, minutes: 20)),
-          )
-    ];
+        date.add(Duration(days: i)): Duration(minutes: 20 * i)
+    };
 
-    smallDataList = smallDataList.reversed.toList();
+    int compare(DateTime a, DateTime b) {
+      return b.compareTo(a);
+    }
+
+    // Data must be sorted.
+    var smallDataList = SplayTreeMap<DateTime, Duration>.from(
+      from,
+      compare,
+    );
 
     return MaterialApp(
       home: Scaffold(
