@@ -263,7 +263,7 @@ class DurationChartState extends State<DurationChart>
         _currentVisibleTooltipRect == rect) return;
     _currentVisibleTooltipRect = rect;
 
-    HapticFeedback.vibrate();
+    HapticFeedback.lightImpact();
     _removeEntry();
 
     _tooltipController.forward();
