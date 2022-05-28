@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'chart_engine.dart';
+import 'package:time_chart/src/components/constants.dart';
 
 class BorderLinePainter extends CustomPainter {
   const BorderLinePainter();

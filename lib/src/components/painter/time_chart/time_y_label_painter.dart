@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/painter/y_label_painter.dart';
-
-import '../chart_engine.dart';
 
 class TimeYLabelPainter extends YLabelPainter {
   static const double _tolerance = 6.0;

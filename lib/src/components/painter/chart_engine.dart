@@ -1,23 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:time_chart/src/components/constants.dart';
 import '../view_mode.dart';
 import '../translations/translations.dart';
 
-const double kYLabelMargin = 12.0;
-const int _kPivotYLabelHour = 12;
 
-const double kXLabelHeight = 32.0;
-
-const double kLineStrokeWidth = 0.8;
-
-const double kBarWidthRatio = 0.7;
-const double kBarPaddingWidthRatio = (1 - kBarWidthRatio) / 2;
-
-const Color kLineColor1 = Color(0x44757575);
-const Color kLineColor2 = Color(0x77757575);
-const Color kLineColor3 = Color(0xAA757575);
-const Color kTextColor = Color(0xFF757575);
 
 abstract class ChartEngine extends CustomPainter {
   static const int toleranceDay = 1;
@@ -66,7 +54,7 @@ abstract class ChartEngine extends CustomPainter {
   void setRightMargin() {
     final TextPainter tp = TextPainter(
       text: TextSpan(
-        text: translations.formatHourOnly(_kPivotYLabelHour),
+        text: translations.formatHourOnly(kPivotYLabelHour),
         style: textTheme.bodyText2!.copyWith(color: kTextColor),
       ),
       textDirection: TextDirection.ltr,

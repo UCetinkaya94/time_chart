@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
+import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/painter/chart_engine.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/view_mode.dart';

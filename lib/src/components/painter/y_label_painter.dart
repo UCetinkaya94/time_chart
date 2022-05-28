@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/painter/chart_engine.dart';
 
 abstract class YLabelPainter extends ChartEngine {

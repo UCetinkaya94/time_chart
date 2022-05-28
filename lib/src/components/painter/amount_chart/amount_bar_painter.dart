@@ -1,26 +1,41 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:time_chart/src/components/painter/bar_painter.dart';
 import 'package:touchable/touchable.dart';
 import '../chart_engine.dart';
 
-class AmountBarPainter extends BarPainter<AmountBarItem> {
+typedef TooltipCallback = void Function({
+  required double amount,
+  required DateTime amountDate,
+  required Rect rect,
+  required ScrollPosition position,
+  required double barWidth,
+});
+
+class AmountBarPainter extends ChartEngine {
   AmountBarPainter({
     required super.scrollController,
     required super.repaint,
-    required super.tooltipCallback,
     required super.context,
-    required super.dataMap,
-    required super.topHour,
-    required super.bottomHour,
     required super.dayCount,
     required super.viewMode,
-    super.barColor,
+    required this.dataMap,
+    required this.topHour,
+    required this.tooltipCallback,
+    this.barColor,
   });
 
+  final TooltipCallback tooltipCallback;
+  final Color? barColor;
+  final SplayTreeMap<DateTime, Duration> dataMap;
+  final int topHour;
+  final barRadius = const Radius.circular(6.0);
+
   @override
-  void drawBar(Canvas canvas, Size size, List<AmountBarItem> coordinates) {
+  void paint(Canvas canvas, Size size) {
+    final coordinates = generateCoordinates(size);
+
     final touchyCanvas = TouchyCanvas(
       context,
       canvas,
@@ -67,8 +82,8 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
     }
   }
 
-  @override
   List<AmountBarItem> generateCoordinates(Size size) {
+    setDefaultValue(size);
     final List<AmountBarItem> coordinates = [];
 
     if (dataMap.isEmpty) return [];
@@ -89,7 +104,7 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
 
       amountSum += entry.value.inMinutes / 60;
 
-      final normalizedTop = max(0, amountSum - bottomHour) / topHour;
+      final normalizedTop = max(0, amountSum) / topHour;
 
       final dy = size.height - normalizedTop * size.height;
       final dx = size.width - intervalOfBars * barPosition;
@@ -101,6 +116,11 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
     }
 
     return coordinates;
+  }
+
+  @override
+  bool shouldRepaint(AmountBarPainter oldDelegate) {
+    return oldDelegate.dataMap != dataMap;
   }
 }
 

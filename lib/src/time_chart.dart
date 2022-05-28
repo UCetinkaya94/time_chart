@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
+import 'package:time_chart/src/components/constants.dart';
 import 'package:touchable/touchable.dart';
 
 import '../time_chart.dart';
@@ -14,7 +15,6 @@ import 'components/painter/amount_chart/amount_y_label_painter.dart';
 import 'components/painter/border_line_painter.dart';
 import 'components/scroll/custom_scroll_physics.dart';
 import 'components/scroll/my_single_child_scroll_view.dart';
-import 'components/painter/chart_engine.dart';
 import 'components/painter/amount_chart/amount_bar_painter.dart';
 import 'components/tooltip/tooltip_overlay.dart';
 import 'components/tooltip/tooltip_size.dart';
@@ -668,7 +668,6 @@ class DurationChartState extends State<DurationChart>
       dataMap: widget.data,
       barColor: widget.barColor,
       topHour: _topHour,
-      bottomHour: 0,
       tooltipCallback: _tooltipCallback,
       dayCount: widget.data.length,
       viewMode: widget.viewMode,
