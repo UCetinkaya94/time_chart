@@ -655,13 +655,13 @@ class DurationChartState extends State<DurationChart>
       viewMode: widget.viewMode,
       firstValueDateTime: widget.data.isEmpty
           ? DateTime.now() //
-          : widget.data.lastKey(),
+          : widget.data.lastKey()!,
       dayCount: widget.data.length,
     );
   }
 
   CustomPainter _buildBarPainter(BuildContext context) {
-    return AmountBarPainter(
+    return BarPainter(
       scrollController: _barController,
       repaint: _scrollOffsetNotifier,
       context: context,

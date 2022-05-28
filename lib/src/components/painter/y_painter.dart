@@ -1,17 +1,30 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/constants.dart';
-import 'package:time_chart/src/components/painter/chart_engine.dart';
+import 'package:time_chart/src/components/translations/translations.dart';
+import 'package:time_chart/src/components/view_mode.dart';
 
-class YPainter extends ChartEngine {
+class YPainter extends CustomPainter {
   YPainter({
-    required super.viewMode,
-    required super.context,
+    super.repaint,
+    int? dayCount,
+    required this.viewMode,
+    required this.context,
     required this.topHour,
     required this.bottomHour,
-  });
+  })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
+        translations = Translations(context);
 
+  final int dayCount;
   final int topHour;
   final int bottomHour;
+  final ViewMode viewMode;
+  final BuildContext context;
+  final Translations translations;
+
+  double _rightMargin = 0.0;
+  TextTheme get textTheme => Theme.of(context).textTheme;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -54,7 +67,7 @@ class YPainter extends ChartEngine {
     tp.paint(
       canvas,
       Offset(
-        size.width - rightMargin + kYLabelMargin,
+        size.width - _rightMargin + kYLabelMargin,
         y - textTheme.bodyText2!.fontSize! / 2,
       ),
     );
@@ -66,7 +79,23 @@ class YPainter extends ChartEngine {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = kLineStrokeWidth;
 
-    canvas.drawLine(Offset(0, dy), Offset(size.width - rightMargin, dy), paint);
+    canvas.drawLine(
+      Offset(0, dy),
+      Offset(size.width - _rightMargin, dy),
+      paint,
+    );
+  }
+
+  void setRightMargin() {
+    final TextPainter tp = TextPainter(
+      text: TextSpan(
+        text: translations.formatHourOnly(kPivotYLabelHour),
+        style: textTheme.bodyText2!.copyWith(color: kTextColor),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    tp.layout();
+    _rightMargin = tp.width + kYLabelMargin;
   }
 
   @override

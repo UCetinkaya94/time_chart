@@ -2,8 +2,10 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:time_chart/src/components/constants.dart';
+import 'package:time_chart/src/components/translations/translations.dart';
+import 'package:time_chart/time_chart.dart';
 import 'package:touchable/touchable.dart';
-import 'chart_engine.dart';
 
 typedef TooltipCallback = void Function({
   required double amount,
@@ -13,24 +15,39 @@ typedef TooltipCallback = void Function({
   required double barWidth,
 });
 
-class AmountBarPainter extends ChartEngine {
-  AmountBarPainter({
-    required super.scrollController,
+class BarPainter extends CustomPainter {
+  BarPainter({
+    required this.scrollController,
+    int? dayCount,
     required super.repaint,
-    required super.context,
-    required super.dayCount,
-    required super.viewMode,
+    required this.context,
+    required this.viewMode,
     required this.dataMap,
     required this.topHour,
     required this.tooltipCallback,
     this.barColor,
-  });
+  })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
+        translations = Translations(context);
 
+  final int dayCount;
+  final ViewMode viewMode;
+  final BuildContext context;
+  final Translations translations;
+  final ScrollController scrollController;
   final TooltipCallback tooltipCallback;
   final Color? barColor;
   final SplayTreeMap<DateTime, Duration> dataMap;
   final int topHour;
   final barRadius = const Radius.circular(6.0);
+
+  double _barWidth = 0.0;
+  double _paddingForAlignedBar = 0.0;
+  double? _blockWidth;
+
+  int get currentDayFromScrollOffset {
+    if (!scrollController.hasClients) return 0;
+    return (scrollController.offset / _blockWidth!).floor();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -51,8 +68,8 @@ class AmountBarPainter extends ChartEngine {
     for (int index = 0; index < coordinates.length; index++) {
       final offsetWithAmount = coordinates[index];
 
-      final left = paddingForAlignedBar + offsetWithAmount.dx;
-      final right = paddingForAlignedBar + offsetWithAmount.dx + barWidth;
+      final left = _paddingForAlignedBar + offsetWithAmount.dx;
+      final right = _paddingForAlignedBar + offsetWithAmount.dx + _barWidth;
       final top = offsetWithAmount.dy;
       final bottom = size.height;
 
@@ -66,9 +83,9 @@ class AmountBarPainter extends ChartEngine {
         tooltipCallback(
           amount: offsetWithAmount.amount,
           amountDate: offsetWithAmount.dateTime,
-          position: scrollController!.position,
+          position: scrollController.position,
           rect: rRect.outerRect,
-          barWidth: barWidth,
+          barWidth: _barWidth,
         );
       }
 
@@ -99,9 +116,10 @@ class AmountBarPainter extends ChartEngine {
     for (final entry in dataMap.entries) {
       final int barPosition = 1 + index;
 
-      if (barPosition - dayFromScrollOffset >
-          viewLimitDay + ChartEngine.toleranceDay * 2) break;
-
+      if (barPosition - dayFromScrollOffset > viewLimitDay + toleranceDay * 2) {
+        break;
+      }
+      
       amountSum += entry.value.inMinutes / 60;
 
       final normalizedTop = max(0, amountSum) / topHour;
@@ -118,8 +136,15 @@ class AmountBarPainter extends ChartEngine {
     return coordinates;
   }
 
+  void setDefaultValue(Size size) {
+    _blockWidth = size.width / dayCount;
+    _barWidth = _blockWidth! * kBarWidthRatio;
+    // [padding] to center the bar position
+    _paddingForAlignedBar = _blockWidth! * kBarPaddingWidthRatio;
+  }
+
   @override
-  bool shouldRepaint(AmountBarPainter oldDelegate) {
+  bool shouldRepaint(BarPainter oldDelegate) {
     return oldDelegate.dataMap != dataMap;
   }
 }

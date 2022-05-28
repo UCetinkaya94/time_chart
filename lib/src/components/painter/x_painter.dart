@@ -1,46 +1,55 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
-import 'package:time_chart/src/components/painter/chart_engine.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
-class XPainter extends ChartEngine {
+class XPainter extends CustomPainter {
   static const int toleranceDay = 1;
 
   XPainter({
-    required super.viewMode,
-    required super.context,
-    this.firstDataHasChanged = false,
-    required super.dayCount,
-    required super.firstValueDateTime,
     required super.repaint,
-    required super.scrollController,
-  });
+    required this.viewMode,
+    required this.context,
+    int? dayCount,
+    required this.firstValueDateTime,
+    required this.scrollController,
+    this.firstDataHasChanged = false,
+  })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
+        translations = Translations(context);
 
+  final int dayCount;
   final bool firstDataHasChanged;
+  final ViewMode viewMode;
+  final BuildContext context;
+  final DateTime firstValueDateTime;
+  final ScrollController scrollController;
+  final Translations translations;
+
+  double _paddingForAlignedBar = 0.0;
+  late double _blockWidth;
+
+  int get currentDayFromScrollOffset {
+    if (!scrollController.hasClients) return 0;
+    return (scrollController.offset / _blockWidth).floor();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     setDefaultValue(size);
-    drawXLabels(canvas, size, firstDataHasChanged: firstDataHasChanged);
-  }
 
-  void drawXLabels(
-    Canvas canvas,
-    Size size, {
-    bool firstDataHasChanged = false,
-  }) {
     final weekday = getShortWeekdayList(context);
     final viewModeLimitDay = viewMode.dayCount;
     final dayFromScrollOffset = currentDayFromScrollOffset - toleranceDay;
 
     var currentDate =
-        firstValueDateTime!.subtract(Duration(days: dayFromScrollOffset));
+        firstValueDateTime.subtract(Duration(days: dayFromScrollOffset));
 
-    for (int i = dayFromScrollOffset;
-        i <= dayFromScrollOffset + viewModeLimitDay + toleranceDay * 2;
-        i++) {
+    final maxCount = dayFromScrollOffset + viewModeLimitDay + toleranceDay * 2;
+
+    for (int i = dayFromScrollOffset; i <= maxCount; i++) {
       late String text;
       bool isDashed = true;
 
@@ -53,11 +62,11 @@ class XPainter extends ChartEngine {
         case ViewMode.monthly:
           text = currentDate.day.toString();
           currentDate = currentDate.subtract(const Duration(days: 1));
-          // 월간 보기 모드는 7일에 한 번씩 label 을 표시한다.
+          // Monthly view mode displays the label once every 7 days.
           if (i % 7 != (firstDataHasChanged ? 0 : 6)) continue;
       }
 
-      final dx = size.width - (i + 1) * blockWidth!;
+      final dx = size.width - (i + 1) * _blockWidth;
 
       _drawXText(canvas, size, text, dx);
       _drawVerticalDivideLine(canvas, size, dx, isDashed);
@@ -68,7 +77,9 @@ class XPainter extends ChartEngine {
     TextPainter textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: textTheme.bodyText2!.copyWith(color: kTextColor),
+        style: Theme.of(context).textTheme.bodyText2!.copyWith(
+              color: kTextColor,
+            ),
       ),
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
@@ -78,17 +89,16 @@ class XPainter extends ChartEngine {
     final dy = size.height - textPainter.height;
 
     if (viewMode == ViewMode.weekly) {
-      final availableSpace = blockWidth! - 2 * kLineStrokeWidth;
+      final availableSpace = _blockWidth - 2 * kLineStrokeWidth;
       final textWidth = textPainter.width;
       final paddingLeft = (availableSpace / 2) - (textWidth / 2);
 
       textPainter.paint(canvas, Offset(dx + paddingLeft, dy));
     } else {
-      textPainter.paint(canvas, Offset(dx + paddingForAlignedBar, dy));
+      textPainter.paint(canvas, Offset(dx + _paddingForAlignedBar, dy));
     }
   }
 
-  /// 분할하는 세로선을 그려준다.
   void _drawVerticalDivideLine(
     Canvas canvas,
     Size size,
@@ -112,6 +122,11 @@ class XPainter extends ChartEngine {
           : path,
       paint,
     );
+  }
+
+  void setDefaultValue(Size size) {
+    _blockWidth = size.width / dayCount;
+    _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
   }
 
   @override
