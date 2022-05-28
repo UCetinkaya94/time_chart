@@ -102,7 +102,7 @@ class Translations {
 
 /// 일,월,화,... Sun, Mon, Tue,...
 List<String> getShortWeekdayList(BuildContext context) {
-  return dateTimeSymbolMap()[_locale(context)].SHORTWEEKDAYS;
+  return dateTimeSymbolMap()[_locale(context)].NARROWWEEKDAYS;
 }
 
 /// 1월, 2월, 3월,... Jan, Feb, Mar,...

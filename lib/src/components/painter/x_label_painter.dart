@@ -34,12 +34,8 @@ abstract class XLabelPainter extends ChartEngine {
     final viewModeLimitDay = viewMode.dayCount;
     final dayFromScrollOffset = currentDayFromScrollOffset - toleranceDay;
 
-    DateTime currentDate =
-        firstValueDateTime!.add(Duration(days: -dayFromScrollOffset));
-
-    void turnOneBeforeDay() {
-      currentDate = currentDate.add(const Duration(days: -1));
-    }
+    var currentDate =
+        firstValueDateTime!.subtract(Duration(days: dayFromScrollOffset));
 
     for (int i = dayFromScrollOffset;
         i <= dayFromScrollOffset + viewModeLimitDay + toleranceDay * 2;
@@ -51,11 +47,11 @@ abstract class XLabelPainter extends ChartEngine {
         case ViewMode.weekly:
           text = weekday[currentDate.weekday % 7];
           if (currentDate.weekday == DateTime.sunday) isDashed = false;
-          turnOneBeforeDay();
+          currentDate = currentDate.subtract(const Duration(days: 1));
           break;
         case ViewMode.monthly:
           text = currentDate.day.toString();
-          turnOneBeforeDay();
+          currentDate = currentDate.subtract(const Duration(days: 1));
           // 월간 보기 모드는 7일에 한 번씩 label 을 표시한다.
           if (i % 7 != (firstDataHasChanged ? 0 : 6)) continue;
       }
@@ -79,7 +75,16 @@ abstract class XLabelPainter extends ChartEngine {
     textPainter.layout();
 
     final dy = size.height - textPainter.height;
-    textPainter.paint(canvas, Offset(dx + paddingForAlignedBar, dy));
+
+    if (viewMode == ViewMode.weekly) {
+      final availableSpace = blockWidth! - 2 * kLineStrokeWidth;
+      final textWidth = textPainter.width;
+      final paddingLeft = (availableSpace / 2) - (textWidth / 2);
+
+      textPainter.paint(canvas, Offset(dx + paddingLeft, dy));
+    } else {
+      textPainter.paint(canvas, Offset(dx + paddingForAlignedBar, dy));
+    }
   }
 
   /// 분할하는 세로선을 그려준다.
