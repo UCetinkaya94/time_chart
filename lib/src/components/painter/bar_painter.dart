@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:touchable/touchable.dart';
-import '../chart_engine.dart';
+import 'chart_engine.dart';
 
 typedef TooltipCallback = void Function({
   required double amount,

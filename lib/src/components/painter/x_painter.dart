@@ -5,10 +5,10 @@ import 'package:time_chart/src/components/painter/chart_engine.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
-abstract class XLabelPainter extends ChartEngine {
+class XPainter extends ChartEngine {
   static const int toleranceDay = 1;
 
-  XLabelPainter({
+  XPainter({
     required super.viewMode,
     required super.context,
     this.firstDataHasChanged = false,
@@ -115,7 +115,7 @@ abstract class XLabelPainter extends ChartEngine {
   }
 
   @override
-  bool shouldRepaint(covariant XLabelPainter oldDelegate) {
+  bool shouldRepaint(covariant XPainter oldDelegate) {
     return true;
   }
 }

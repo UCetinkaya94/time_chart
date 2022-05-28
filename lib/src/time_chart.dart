@@ -7,15 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import 'package:time_chart/src/components/constants.dart';
+import 'package:time_chart/src/components/painter/x_painter.dart';
 import 'package:touchable/touchable.dart';
 
 import '../time_chart.dart';
-import 'components/painter/amount_chart/amount_x_label_painter.dart';
-import 'components/painter/amount_chart/amount_y_label_painter.dart';
+import 'components/painter/y_painter.dart';
 import 'components/painter/border_line_painter.dart';
 import 'components/scroll/custom_scroll_physics.dart';
 import 'components/scroll/my_single_child_scroll_view.dart';
-import 'components/painter/amount_chart/amount_bar_painter.dart';
+import 'components/painter/bar_painter.dart';
 import 'components/tooltip/tooltip_overlay.dart';
 import 'components/tooltip/tooltip_size.dart';
 import 'components/translations/translations.dart';
@@ -493,7 +493,7 @@ class DurationChartState extends State<DurationChart>
                     child: CustomPaint(
                       key: key,
                       size: Size(totalWidth, double.infinity),
-                      painter: AmountYLabelPainter(
+                      painter: YPainter(
                         context: context,
                         viewMode: widget.viewMode,
                         topHour: _topHour,
@@ -648,7 +648,7 @@ class DurationChartState extends State<DurationChart>
   }
 
   CustomPainter _buildXLabelPainter(BuildContext context) {
-    return AmountXLabelPainter(
+    return XPainter(
       scrollController: _xLabelController,
       repaint: _scrollOffsetNotifier,
       context: context,

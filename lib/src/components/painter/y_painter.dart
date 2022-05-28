@@ -1,10 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/painter/chart_engine.dart';
 
-abstract class YLabelPainter extends ChartEngine {
-  YLabelPainter({
+class YPainter extends ChartEngine {
+  YPainter({
     required super.viewMode,
     required super.context,
     required this.topHour,
@@ -15,15 +14,34 @@ abstract class YLabelPainter extends ChartEngine {
   final int bottomHour;
 
   @override
-  @nonVirtual
   void paint(Canvas canvas, Size size) {
     setRightMargin();
-    drawYLabels(canvas, size);
+
+    final hourSuffix = translations.shortHour;
+    final labelInterval =
+        (size.height - kXLabelHeight) / (topHour - bottomHour);
+    final hourDuration = topHour - bottomHour;
+
+    final int timeStep;
+    if (hourDuration >= 12) {
+      timeStep = 4;
+    } else if (hourDuration >= 8) {
+      timeStep = 2;
+    } else {
+      timeStep = 1;
+    }
+    double posY = 0;
+
+    for (int time = topHour; time >= bottomHour; time = time - timeStep) {
+      drawYText(canvas, size, '$time $hourSuffix', posY);
+      if (topHour > time && time > bottomHour) {
+        drawHorizontalLine(canvas, size, posY);
+      }
+
+      posY += labelInterval * timeStep;
+    }
   }
 
-  void drawYLabels(Canvas canvas, Size size);
-
-  /// Y 축의 텍스트 레이블을 그린다.
   void drawYText(Canvas canvas, Size size, String text, double y) {
     TextSpan span = TextSpan(
       text: text,
@@ -42,7 +60,6 @@ abstract class YLabelPainter extends ChartEngine {
     );
   }
 
-  /// 그래프의 수평선을 그린다
   void drawHorizontalLine(Canvas canvas, Size size, double dy) {
     Paint paint = Paint()
       ..color = kLineColor1
@@ -53,7 +70,7 @@ abstract class YLabelPainter extends ChartEngine {
   }
 
   @override
-  bool shouldRepaint(covariant YLabelPainter oldDelegate) {
+  bool shouldRepaint(covariant YPainter oldDelegate) {
     return oldDelegate.topHour != topHour ||
         oldDelegate.bottomHour != bottomHour;
   }

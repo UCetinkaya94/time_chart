@@ -5,8 +5,6 @@ import 'package:time_chart/src/components/constants.dart';
 import '../view_mode.dart';
 import '../translations/translations.dart';
 
-
-
 abstract class ChartEngine extends CustomPainter {
   static const int toleranceDay = 1;
 
@@ -32,16 +30,9 @@ abstract class ChartEngine extends CustomPainter {
     return (scrollController!.offset / blockWidth!).floor();
   }
 
-  /// 전체 그래프의 오른쪽 레이블이 들어갈 간격의 크기이다.
   double get rightMargin => _rightMargin;
-
-  /// 바 너비의 크기이다.
   double get barWidth => _barWidth;
-
-  /// 바를 적절하게 정렬하기 위한 값이다.
   double get paddingForAlignedBar => _paddingForAlignedBar;
-
-  /// (바와 바 사이의 여백의 너비 + 바의 너비) => 블럭 너비의 크기이다.
   double? get blockWidth => _blockWidth;
 
   TextTheme get textTheme => Theme.of(context).textTheme;
