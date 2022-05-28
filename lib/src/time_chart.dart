@@ -545,10 +545,22 @@ class DurationChartState extends State<DurationChart>
                   GestureType.onLongPressStart,
                   GestureType.onLongPressMoveUpdate,
                 ],
-                builder: (context) => CustomPaint(
-                  size: innerSize,
-                  painter: _buildBarPainter(context),
-                ),
+                builder: (context) {
+                  return CustomPaint(
+                    size: innerSize,
+                    painter: BarPainter(
+                      scrollController: _barController,
+                      repaint: _scrollOffsetNotifier,
+                      context: context,
+                      dataMap: widget.data,
+                      barColor: widget.barColor,
+                      topHour: _topHour,
+                      tooltipCallback: _tooltipCallback,
+                      dayCount: widget.data.length,
+                      viewMode: widget.viewMode,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -584,7 +596,16 @@ class DurationChartState extends State<DurationChart>
                 controller: _xLabelController,
                 child: CustomPaint(
                   size: innerSize,
-                  painter: _buildXLabelPainter(context),
+                  painter: XPainter(
+                    scrollController: _xLabelController,
+                    repaint: _scrollOffsetNotifier,
+                    context: context,
+                    viewMode: widget.viewMode,
+                    firstValueDateTime: widget.data.isEmpty
+                        ? DateTime.now() //
+                        : widget.data.lastKey()!,
+                    dayCount: widget.data.length,
+                  ),
                 ),
               ),
             ),
@@ -644,33 +665,6 @@ class DurationChartState extends State<DurationChart>
         );
       },
       child: child,
-    );
-  }
-
-  CustomPainter _buildXLabelPainter(BuildContext context) {
-    return XPainter(
-      scrollController: _xLabelController,
-      repaint: _scrollOffsetNotifier,
-      context: context,
-      viewMode: widget.viewMode,
-      firstValueDateTime: widget.data.isEmpty
-          ? DateTime.now() //
-          : widget.data.lastKey()!,
-      dayCount: widget.data.length,
-    );
-  }
-
-  CustomPainter _buildBarPainter(BuildContext context) {
-    return BarPainter(
-      scrollController: _barController,
-      repaint: _scrollOffsetNotifier,
-      context: context,
-      dataMap: widget.data,
-      barColor: widget.barColor,
-      topHour: _topHour,
-      tooltipCallback: _tooltipCallback,
-      dayCount: widget.data.length,
-      viewMode: widget.viewMode,
     );
   }
 }

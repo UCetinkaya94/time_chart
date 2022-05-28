@@ -119,7 +119,6 @@ class BarPainter extends CustomPainter {
       if (barPosition - dayFromScrollOffset > viewLimitDay + toleranceDay * 2) {
         break;
       }
-      
       amountSum += entry.value.inMinutes / 60;
 
       final normalizedTop = max(0, amountSum) / topHour;

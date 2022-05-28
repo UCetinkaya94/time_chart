@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
@@ -7,21 +5,16 @@ import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
 class XPainter extends CustomPainter {
-  static const int toleranceDay = 1;
-
   XPainter({
     required super.repaint,
     required this.viewMode,
     required this.context,
-    int? dayCount,
+    required this.dayCount,
     required this.firstValueDateTime,
     required this.scrollController,
-    this.firstDataHasChanged = false,
-  })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
-        translations = Translations(context);
+  }) : translations = Translations(context);
 
   final int dayCount;
-  final bool firstDataHasChanged;
   final ViewMode viewMode;
   final BuildContext context;
   final DateTime firstValueDateTime;
@@ -38,7 +31,8 @@ class XPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    setDefaultValue(size);
+    _blockWidth = size.width / dayCount;
+    _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
 
     final weekday = getShortWeekdayList(context);
     final viewModeLimitDay = viewMode.dayCount;
@@ -53,17 +47,17 @@ class XPainter extends CustomPainter {
       late String text;
       bool isDashed = true;
 
-      switch (viewMode) {
-        case ViewMode.weekly:
-          text = weekday[currentDate.weekday % 7];
-          if (currentDate.weekday == DateTime.sunday) isDashed = false;
-          currentDate = currentDate.subtract(const Duration(days: 1));
-          break;
-        case ViewMode.monthly:
-          text = currentDate.day.toString();
-          currentDate = currentDate.subtract(const Duration(days: 1));
-          // Monthly view mode displays the label once every 7 days.
-          if (i % 7 != (firstDataHasChanged ? 0 : 6)) continue;
+      if (viewMode == ViewMode.weekly) {
+        text = weekday[currentDate.weekday % 7];
+        if (currentDate.weekday == DateTime.sunday) isDashed = false;
+        currentDate = currentDate.subtract(const Duration(days: 1));
+      } else {
+        text = currentDate.day.toString();
+        currentDate = currentDate.subtract(const Duration(days: 1));
+        // Monthly view mode displays the label once every 7 days.
+        if (i % 7 != 6) {
+          continue;
+        }
       }
 
       final dx = size.width - (i + 1) * _blockWidth;
@@ -122,11 +116,6 @@ class XPainter extends CustomPainter {
           : path,
       paint,
     );
-  }
-
-  void setDefaultValue(Size size) {
-    _blockWidth = size.width / dayCount;
-    _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
   }
 
   @override
