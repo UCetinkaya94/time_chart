@@ -1,4 +1,0 @@
-enum ChartType {
-  time,
-  amount,
-}

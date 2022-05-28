@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'chart_engine.dart';
 
 typedef TooltipCallback = void Function({
-  DateTimeRange? range,
-  double? amount,
-  DateTime? amountDate,
-  required ScrollPosition position,
+  required double amount,
+  required DateTime amountDate,
   required Rect rect,
+  required ScrollPosition position,
   required double barWidth,
 });
 

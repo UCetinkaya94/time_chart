@@ -89,8 +89,7 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
 
       amountSum += entry.value.inMinutes / 60;
 
-      final normalizedTop =
-          max(0, amountSum - bottomHour) / (topHour - bottomHour);
+      final normalizedTop = max(0, amountSum - bottomHour) / topHour;
 
       final dy = size.height - normalizedTop * size.height;
       final dx = size.width - intervalOfBars * barPosition;

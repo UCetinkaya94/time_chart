@@ -152,7 +152,9 @@ class DurationChartState extends State<DurationChart>
 
   double _previousScrollOffset = 0;
 
-  int _topHour = 0;
+  int _topHour = 1;
+
+  Offset? _overlayOffset;
 
   @override
   void initState() {
@@ -230,7 +232,25 @@ class DurationChartState extends State<DurationChart>
 
   void _handlePointerEvent(PointerEvent event) {
     if (_overlayEntry == null) return;
-    if (event is PointerDownEvent) _removeEntry();
+    if (_overlayOffset == null) return;
+
+    if (event is PointerDownEvent) {
+      final eventOffset = event.position;
+
+      final rect = Rect.fromPoints(
+          Offset(_overlayOffset!.dx, _overlayOffset!.dy),
+          Offset(
+            _overlayOffset!.dx + kAmountTooltipSize.width,
+            _overlayOffset!.dy + kAmountTooltipSize.height,
+          ));
+
+      // Don't remove the entry if we touched it
+      if (rect.contains(eventOffset)) {
+        return;
+      }
+
+      _removeEntry();
+    }
   }
 
   /// When the relevant bar is pressed, a tooltip is displayed.
@@ -240,15 +260,12 @@ class DurationChartState extends State<DurationChart>
   ///
   /// This callback is used to manage the overlay entry.
   void _tooltipCallback({
-    DateTimeRange? range,
-    double? amount,
-    DateTime? amountDate,
+    required double amount,
+    required DateTime amountDate,
     required Rect rect,
     required ScrollPosition position,
     required double barWidth,
   }) {
-    assert(range != null || amount != null);
-
     if (!widget.activeTooltip) return;
 
     // Tooltips on bars outside the range of the currently visible chart are ignored
@@ -272,7 +289,6 @@ class DurationChartState extends State<DurationChart>
         rect,
         position,
         barWidth,
-        range: range,
         amount: amount,
         amountDate: amountDate,
       ),
@@ -287,24 +303,18 @@ class DurationChartState extends State<DurationChart>
     Rect rect,
     ScrollPosition position,
     double barWidth, {
-    DateTimeRange? range,
-    double? amount,
-    DateTime? amountDate,
+    required double amount,
+    required DateTime amountDate,
   }) {
-    final chartType = amount == null ? ChartType.time : ChartType.amount;
-
     // Get the current widget's position
     final widgetOffset = context.getRenderBoxOffset()!;
-    final tooltipSize =
-        chartType == ChartType.time ? kTimeTooltipSize : kAmountTooltipSize;
+    const tooltipSize = kAmountTooltipSize;
 
     final candidateTop = rect.top +
         widgetOffset.dy -
         tooltipSize.height / 2 +
         kTimeChartTopPadding +
-        (chartType == ChartType.time
-            ? (rect.bottom - rect.top) / 2
-            : kTooltipArrowHeight / 2);
+        kTooltipArrowHeight / 2;
 
     final scrollPixels = position.maxScrollExtent - position.pixels;
     final localLeft = rect.left + widgetOffset.dx - scrollPixels;
@@ -318,6 +328,8 @@ class DurationChartState extends State<DurationChart>
       tooltipLeft = localLeft + barWidth + _tooltipPadding;
     }
 
+    _overlayOffset = Offset(tooltipLeft, tooltipTop);
+
     return Positioned(
       top: tooltipTop,
       left: tooltipLeft,
@@ -326,16 +338,18 @@ class DurationChartState extends State<DurationChart>
           parent: _tooltipController,
           curve: Curves.fastOutSlowIn,
         ),
-        child: TooltipOverlay(
-          backgroundColor: widget.tooltipBackgroundColor,
-          chartType: chartType,
-          bottomHour: 0,
-          timeRange: range,
-          amountHour: amount,
-          amountDate: amountDate,
-          direction: direction,
-          start: widget.tooltipStart,
-          end: widget.tooltipEnd,
+        child: GestureDetector(
+          onTap: () {
+            print('tapped');
+          },
+          child: TooltipOverlay(
+            backgroundColor: widget.tooltipBackgroundColor,
+            amountHour: amount,
+            amountDate: amountDate,
+            direction: direction,
+            start: widget.tooltipStart,
+            end: widget.tooltipEnd,
+          ),
         ),
       ),
     );
