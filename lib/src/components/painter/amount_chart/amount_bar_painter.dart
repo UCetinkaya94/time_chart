@@ -21,22 +21,25 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
 
   @override
   void drawBar(Canvas canvas, Size size, List<AmountBarItem> coordinates) {
-    final touchyCanvas = TouchyCanvas(context, canvas,
-        scrollController: scrollController,
-        scrollDirection: AxisDirection.left);
+    final touchyCanvas = TouchyCanvas(
+      context,
+      canvas,
+      scrollController: scrollController,
+      scrollDirection: AxisDirection.left,
+    );
+
     final paint = Paint()
       ..color = barColor ?? Theme.of(context).colorScheme.secondary
       ..style = PaintingStyle.fill
       ..strokeCap = StrokeCap.round;
 
     for (int index = 0; index < coordinates.length; index++) {
-      final AmountBarItem offsetWithAmount = coordinates[index];
+      final offsetWithAmount = coordinates[index];
 
-      final double left = paddingForAlignedBar + offsetWithAmount.dx;
-      final double right =
-          paddingForAlignedBar + offsetWithAmount.dx + barWidth;
-      final double top = offsetWithAmount.dy;
-      final double bottom = size.height;
+      final left = paddingForAlignedBar + offsetWithAmount.dx;
+      final right = paddingForAlignedBar + offsetWithAmount.dx + barWidth;
+      final top = offsetWithAmount.dy;
+      final bottom = size.height;
 
       final rRect = RRect.fromRectAndCorners(
         Rect.fromLTRB(left, top, right, bottom),
@@ -44,13 +47,15 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
         topRight: barRadius,
       );
 
-      callback(_) => tooltipCallback(
-            amount: offsetWithAmount.amount,
-            amountDate: offsetWithAmount.dateTime,
-            position: scrollController!.position,
-            rect: rRect.outerRect,
-            barWidth: barWidth,
-          );
+      callback(_) {
+        tooltipCallback(
+          amount: offsetWithAmount.amount,
+          amountDate: offsetWithAmount.dateTime,
+          position: scrollController!.position,
+          rect: rRect.outerRect,
+          barWidth: barWidth,
+        );
+      }
 
       touchyCanvas.drawRRect(
         rRect,
@@ -60,9 +65,6 @@ class AmountBarPainter extends BarPainter<AmountBarItem> {
         onLongPressMoveUpdate: callback,
       );
     }
-    //if(bottomHour > 0) {
-    //  _drawBrokeBarLine(canvas, size);
-    //}
   }
 
   @override
