@@ -116,9 +116,10 @@ class BarPainter extends CustomPainter {
     for (final entry in dataMap.entries) {
       final int barPosition = 1 + index;
 
-      if (barPosition - dayFromScrollOffset > viewLimitDay + toleranceDay * 2) {
+      if (barPosition - dayFromScrollOffset > viewLimitDay + 2) {
         break;
       }
+      
       amountSum += entry.value.inMinutes / 60;
 
       final normalizedTop = max(0, amountSum) / topHour;

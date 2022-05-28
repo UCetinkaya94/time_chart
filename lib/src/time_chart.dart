@@ -598,6 +598,7 @@ class DurationChartState extends State<DurationChart>
                   size: innerSize,
                   painter: XPainter(
                     scrollController: _xLabelController,
+                    data: widget.data,
                     repaint: _scrollOffsetNotifier,
                     context: context,
                     viewMode: widget.viewMode,

@@ -1,10 +1,26 @@
 import 'dart:collection';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:time_chart/time_chart.dart';
 
-void main() => runApp(MyApp());
+class ScrollBehaviorModified extends ScrollBehavior {
+  const ScrollBehaviorModified();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics();
+  }
+}
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(
+    MyApp(),
+  );
+}
 
 class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
@@ -30,15 +46,22 @@ class MyApp extends StatelessWidget {
   late final List<DateTimeRange> bigDataList = getRandomSampleDataList();
 
   late final smallDataList = () {
-    final date = DateTime(2021, 2, 26);
-
     final random = Random();
 
     final from = {
-      for (int i = 0; i < 30; i++)
-        date.add(Duration(days: i)): Duration(minutes: random.nextInt(90 * 60)),
-      for (int i = 30; i < 60; i++)
-        date.add(Duration(days: i)): Duration(minutes: random.nextInt(3 * 60)),
+      DateTime(2021, 2, 26): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 2, 27): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 2, 28): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 1): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 2): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 3): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 4): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 5): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 6): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 7): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 8): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 9): Duration(minutes: random.nextInt(90 * 60)),
+      DateTime(2021, 3, 10): Duration(minutes: random.nextInt(90 * 60)),
     };
 
     int compare(DateTime a, DateTime b) {
@@ -57,6 +80,10 @@ class MyApp extends StatelessWidget {
     const sizedBox = SizedBox(height: 16);
 
     return MaterialApp(
+      builder: (context, widget) {
+        return ScrollConfiguration(
+            behavior: const ScrollBehaviorModified(), child: widget!);
+      },
       home: Scaffold(
         appBar: AppBar(title: const Text('Time chart example app')),
         body: SingleChildScrollView(
@@ -71,12 +98,12 @@ class MyApp extends StatelessWidget {
                   barColor: Colors.deepPurple,
                 ),
                 sizedBox,
-                const Text('Monthly amount chart'),
+                /*  const Text('Monthly amount chart'),
                 DurationChart(
                   data: smallDataList,
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
-                ),
+                ), */
               ],
             ),
           ),

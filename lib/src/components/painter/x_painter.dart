@@ -1,6 +1,9 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
+import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
@@ -12,6 +15,7 @@ class XPainter extends CustomPainter {
     required this.dayCount,
     required this.firstValueDateTime,
     required this.scrollController,
+    required this.data,
   }) : translations = Translations(context);
 
   final int dayCount;
@@ -20,14 +24,10 @@ class XPainter extends CustomPainter {
   final DateTime firstValueDateTime;
   final ScrollController scrollController;
   final Translations translations;
+  final SplayTreeMap<DateTime, Duration> data;
 
   double _paddingForAlignedBar = 0.0;
   late double _blockWidth;
-
-  int get currentDayFromScrollOffset {
-    if (!scrollController.hasClients) return 0;
-    return (scrollController.offset / _blockWidth).floor();
-  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -36,10 +36,16 @@ class XPainter extends CustomPainter {
 
     final weekday = getShortWeekdayList(context);
     final viewModeLimitDay = viewMode.dayCount;
-    final dayFromScrollOffset = currentDayFromScrollOffset - toleranceDay;
 
-    var currentDate =
-        firstValueDateTime.subtract(Duration(days: dayFromScrollOffset));
+    final currentBarIndex = !scrollController.hasClients
+        ? 0
+        : (scrollController.offset / _blockWidth).floor();
+
+    final dayFromScrollOffset = currentBarIndex - toleranceDay;
+
+    var currentDate = firstValueDateTime.subtract(
+      Duration(days: dayFromScrollOffset),
+    );
 
     final maxCount = dayFromScrollOffset + viewModeLimitDay + toleranceDay * 2;
 
@@ -65,6 +71,29 @@ class XPainter extends CustomPainter {
       _drawXText(canvas, size, text, dx);
       _drawVerticalDivideLine(canvas, size, dx, isDashed);
     }
+  }
+
+  List<MapEntry<DateTime, Duration>> _getVisibleItems() {
+    final rightIndex = getRightMostVisibleIndex(
+      scrollController.position,
+      _blockWidth,
+    );
+
+    final leftIndex = getLeftMostVisibleIndex(
+      rightIndex,
+      data.length,
+      viewMode.dayCount,
+    );
+
+    final visibleKeys = data.keys.toList().getRange(
+          rightIndex.toInt(),
+          leftIndex.toInt() + 1,
+        );
+
+    return [
+      for (final key in visibleKeys) //
+        MapEntry(key, data[key]!)
+    ];
   }
 
   void _drawXText(Canvas canvas, Size size, String text, double dx) {
