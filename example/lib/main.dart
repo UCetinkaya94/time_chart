@@ -29,17 +29,14 @@ class MyApp extends StatelessWidget {
 
   late final List<DateTimeRange> bigDataList = getRandomSampleDataList();
 
-  @override
-  Widget build(BuildContext context) {
-    const sizedBox = SizedBox(height: 16);
-
+  late final smallDataList = () {
     final date = DateTime(2021, 2, 26);
 
     final random = Random();
 
     final from = {
       for (int i = 0; i < 30; i++)
-        date.add(Duration(days: i)): Duration(minutes: random.nextInt(6 * 60)),
+        date.add(Duration(days: i)): Duration(minutes: random.nextInt(90 * 60)),
       for (int i = 30; i < 60; i++)
         date.add(Duration(days: i)): Duration(minutes: random.nextInt(3 * 60)),
     };
@@ -49,10 +46,15 @@ class MyApp extends StatelessWidget {
     }
 
     // Data must be sorted.
-    var smallDataList = SplayTreeMap<DateTime, Duration>.from(
+    return SplayTreeMap<DateTime, Duration>.from(
       from,
       compare,
     );
+  }();
+
+  @override
+  Widget build(BuildContext context) {
+    const sizedBox = SizedBox(height: 16);
 
     return MaterialApp(
       home: Scaffold(
