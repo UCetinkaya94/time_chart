@@ -151,7 +151,7 @@ class DurationChartState extends State<DurationChart>
 
   double _previousScrollOffset = 0;
 
-  int _topHour = 1;
+  late int _topHour = _getMaxHour();
 
   Offset? _overlayOffset;
 
@@ -183,12 +183,6 @@ class DurationChartState extends State<DurationChart>
     GestureBinding.instance.pointerRouter.addGlobalRoute(_handlePointerEvent);
 
     _addScrollNotifier();
-
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      setState(() {
-        _topHour = _getMaxHour();
-      });
-    });
   }
 
   @override
@@ -404,12 +398,16 @@ class DurationChartState extends State<DurationChart>
   }
 
   int _getMaxHour() {
-    if (!_barController.hasClients) return 8;
+    final double rightIndex;
 
-    final rightIndex = getRightMostVisibleIndex(
-      _barController.position,
-      _totalBarWidth!,
-    );
+    if (!_barController.hasClients) {
+      rightIndex = 0.0;
+    } else {
+      rightIndex = getRightMostVisibleIndex(
+        _barController.position,
+        _totalBarWidth!,
+      );
+    }
 
     final leftIndex = getLeftMostVisibleIndex(
       rightIndex,
@@ -422,17 +420,29 @@ class DurationChartState extends State<DurationChart>
         .getRange(rightIndex.toInt(), leftIndex.toInt() + 1)
         .toList();
 
-    int currentMax = 0;
+    double currentMax = 0;
 
     for (final item in visibleItems) {
-      final hours = item.inHours + 1;
+      final hours = item.inMinutes / 60;
 
       if (hours > currentMax) {
         currentMax = hours;
       }
     }
 
-    return currentMax;
+    if (currentMax < 10) {
+      return _roundTo(currentMax.truncate() + 1, 2);
+    }
+
+    if (currentMax.truncate() + 1 < 100) {
+      return _roundTo(currentMax.truncate() + 1, 20);
+    }
+
+    return _roundTo(currentMax.truncate() + 1, 50);
+  }
+
+  int _roundTo(int number, int divider) {
+    return (number / divider).ceil() * divider;
   }
 
   double get heightWithoutLabel => widget.height - kXLabelHeight;
@@ -496,7 +506,6 @@ class DurationChartState extends State<DurationChart>
                         context: context,
                         viewMode: widget.viewMode,
                         topHour: _topHour,
-                        bottomHour: 0,
                       ),
                     ),
                   ),

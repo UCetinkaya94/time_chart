@@ -12,13 +12,11 @@ class YPainter extends CustomPainter {
     required this.viewMode,
     required this.context,
     required this.topHour,
-    required this.bottomHour,
   })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
         translations = Translations(context);
 
   final int dayCount;
   final int topHour;
-  final int bottomHour;
   final ViewMode viewMode;
   final BuildContext context;
   final Translations translations;
@@ -30,24 +28,23 @@ class YPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     setRightMargin();
 
-    final hourSuffix = translations.shortHour;
-    final labelInterval =
-        (size.height - kXLabelHeight) / (topHour - bottomHour);
-    final hourDuration = topHour - bottomHour;
+    final labelInterval = (size.height - kXLabelHeight) / topHour;
 
     final int timeStep;
-    if (hourDuration >= 12) {
-      timeStep = 4;
-    } else if (hourDuration >= 8) {
-      timeStep = 2;
-    } else {
-      timeStep = 1;
+
+    int divider = 2;
+
+    while (topHour % divider != 0) {
+      divider++;
     }
+
+    timeStep = (topHour / divider).truncate();
+
     double posY = 0;
 
-    for (int time = topHour; time >= bottomHour; time = time - timeStep) {
-      drawYText(canvas, size, '$time $hourSuffix', posY);
-      if (topHour > time && time > bottomHour) {
+    for (int time = topHour; time >= 0; time = time - timeStep) {
+      drawYText(canvas, size, '$time h', posY);
+      if (topHour > time && time > 0) {
         drawHorizontalLine(canvas, size, posY);
       }
 
@@ -100,7 +97,6 @@ class YPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant YPainter oldDelegate) {
-    return oldDelegate.topHour != topHour ||
-        oldDelegate.bottomHour != bottomHour;
+    return oldDelegate.topHour != topHour;
   }
 }

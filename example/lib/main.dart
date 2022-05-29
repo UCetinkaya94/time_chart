@@ -46,13 +46,10 @@ class MyApp extends StatelessWidget {
   }();
 
   late final yearlyData = () {
-    final random = Random();
-
     final date = DateTime.now();
 
     final from = {
-      for (int i = 0; i < 24; i++)
-        date.subtractMonths(i): Duration(minutes: random.nextInt(90 * 60)),
+      for (int i = 0; i < 180; i++) date.subtractMonths(i): Duration(hours: i),
     };
 
     int compare(DateTime a, DateTime b) {
