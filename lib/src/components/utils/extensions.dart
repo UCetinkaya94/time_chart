@@ -66,6 +66,10 @@ extension DateExtensions on DateTime {
     return res;
   }
 
+  DateTime subtractMonths(int amount) {
+    return DateTime.utc(year, month - amount).trimmed;
+  }
+
   int differenceInDays(DateTime to) {
     final from = trimmedUtc;
     to = to.trimmedUtc;

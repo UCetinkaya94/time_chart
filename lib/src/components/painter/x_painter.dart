@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
-import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/src/components/utils/extensions.dart';
 import 'package:time_chart/src/components/view_mode.dart';
@@ -50,12 +49,15 @@ class XPainter extends CustomPainter {
       if (viewMode == ViewMode.weekly) {
         text = getShortWeekdayList(context)[currentDate.weekday % 7];
         if (currentDate.weekday == DateTime.sunday) isDashed = false;
-      } else {
+      } else if (viewMode == ViewMode.monthly) {
         text = currentDate.day.toString();
         // Monthly view mode displays the label once every 7 days.
         if (i % 7 != 6) {
           continue;
         }
+      } else {
+        text = getShortMonthList(context)[currentDate.month % 12];
+        if (currentDate.month == DateTime.december) isDashed = false;
       }
 
       final dx = size.width - (i + 1) * _blockWidth;
@@ -66,30 +68,11 @@ class XPainter extends CustomPainter {
   }
 
   DateTime _dateForIndex(int index) {
+    if (viewMode == ViewMode.yearly) {
+      return latestDate.subtractMonths(index);
+    }
+
     return latestDate.subtractDays(index);
-  }
-
-  List<MapEntry<DateTime, Duration>> _getVisibleItems() {
-    final rightIndex = getRightMostVisibleIndex(
-      scrollController.position,
-      _blockWidth,
-    );
-
-    final leftIndex = getLeftMostVisibleIndex(
-      rightIndex,
-      data.length,
-      viewMode.dayCount,
-    );
-
-    final visibleKeys = data.keys.toList().getRange(
-          rightIndex.toInt(),
-          leftIndex.toInt() + 1,
-        );
-
-    return [
-      for (final key in visibleKeys) //
-        MapEntry(key, data[key]!)
-    ];
   }
 
   void _drawXText(Canvas canvas, Size size, String text, double dx) {
@@ -107,7 +90,7 @@ class XPainter extends CustomPainter {
 
     final dy = size.height - textPainter.height;
 
-    if (viewMode == ViewMode.weekly) {
+    if (viewMode != ViewMode.monthly) {
       final availableSpace = _blockWidth - 2 * kLineStrokeWidth;
       final textWidth = textPainter.width;
       final paddingLeft = (availableSpace / 2) - (textWidth / 2);

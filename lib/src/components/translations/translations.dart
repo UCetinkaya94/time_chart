@@ -107,7 +107,7 @@ List<String> getShortWeekdayList(BuildContext context) {
 
 /// 1월, 2월, 3월,... Jan, Feb, Mar,...
 List<String> getShortMonthList(BuildContext context) {
-  return dateTimeSymbolMap()[_locale(context)].SHORTMONTHS;
+  return dateTimeSymbolMap()[_locale(context)].NARROWMONTHS;
 }
 
 String _locale(BuildContext context) {
