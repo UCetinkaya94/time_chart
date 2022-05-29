@@ -34,14 +34,14 @@ class XPainter extends CustomPainter {
     _blockWidth = size.width / dayCount;
     _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
 
-    final weekday = getShortWeekdayList(context);
+    final narrowWeekdays = getShortWeekdayList(context);
     final viewModeLimitDay = viewMode.dayCount;
 
-    final currentBarIndex = !scrollController.hasClients
+    final rightMostVisibleBar = !scrollController.hasClients
         ? 0
         : (scrollController.offset / _blockWidth).floor();
 
-    final dayFromScrollOffset = currentBarIndex - toleranceDay;
+    final dayFromScrollOffset = rightMostVisibleBar - toleranceDay;
 
     var currentDate = firstValueDateTime.subtract(
       Duration(days: dayFromScrollOffset),
@@ -54,7 +54,7 @@ class XPainter extends CustomPainter {
       bool isDashed = true;
 
       if (viewMode == ViewMode.weekly) {
-        text = weekday[currentDate.weekday % 7];
+        text = narrowWeekdays[currentDate.weekday % 7];
         if (currentDate.weekday == DateTime.sunday) isDashed = false;
         currentDate = currentDate.subtract(const Duration(days: 1));
       } else {

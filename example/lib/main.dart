@@ -48,20 +48,12 @@ class MyApp extends StatelessWidget {
   late final smallDataList = () {
     final random = Random();
 
+    final date = DateTime.now();
+
     final from = {
-      DateTime(2021, 2, 26): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 2, 27): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 2, 28): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 1): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 2): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 3): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 4): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 5): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 6): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 7): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 8): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 9): Duration(minutes: random.nextInt(90 * 60)),
-      DateTime(2021, 3, 10): Duration(minutes: random.nextInt(90 * 60)),
+      for (int i = 0; i < 90; i++)
+        date.subtract(Duration(days: i)):
+            Duration(minutes: random.nextInt(10 * 60)),
     };
 
     int compare(DateTime a, DateTime b) {
