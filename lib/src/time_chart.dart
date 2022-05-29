@@ -29,7 +29,7 @@ class DurationChart extends StatefulWidget {
     super.key,
     this.width,
     this.height = 280.0,
-    this.barColor,
+    required this.barColor,
     required this.data,
     this.timeChartSizeAnimationDuration = const Duration(milliseconds: 300),
     this.tooltipDuration = const Duration(seconds: 7),
@@ -53,8 +53,7 @@ class DurationChart extends StatefulWidget {
 
   /// The color of the bar in the chart.
   ///
-  /// Default is the `Theme.of(context).colorScheme.secondary`.
-  final Color? barColor;
+  final Color barColor;
 
   /// Pair of a date and a duration.
   ///

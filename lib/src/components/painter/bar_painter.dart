@@ -25,7 +25,7 @@ class BarPainter extends CustomPainter {
     required this.dataMap,
     required this.topHour,
     required this.tooltipCallback,
-    this.barColor,
+    required this.barColor,
   })  : dayCount = max(dayCount ?? -1, viewMode.dayCount),
         translations = Translations(context);
 
@@ -35,7 +35,7 @@ class BarPainter extends CustomPainter {
   final Translations translations;
   final ScrollController scrollController;
   final TooltipCallback tooltipCallback;
-  final Color? barColor;
+  final Color barColor;
   final SplayTreeMap<DateTime, Duration> dataMap;
   final int topHour;
   final barRadius = const Radius.circular(6.0);
@@ -61,7 +61,7 @@ class BarPainter extends CustomPainter {
     );
 
     final paint = Paint()
-      ..color = barColor ?? Theme.of(context).colorScheme.secondary
+      ..color = barColor
       ..style = PaintingStyle.fill
       ..strokeCap = StrokeCap.round;
 
@@ -119,7 +119,7 @@ class BarPainter extends CustomPainter {
       if (barPosition - dayFromScrollOffset > viewLimitDay + 2) {
         break;
       }
-      
+
       amountSum += entry.value.inMinutes / 60;
 
       final normalizedTop = max(0, amountSum) / topHour;

@@ -39,7 +39,26 @@ class MyApp extends StatelessWidget {
       return b.compareTo(a);
     }
 
-    // Data must be sorted.
+    return SplayTreeMap<DateTime, Duration>.from(
+      from,
+      compare,
+    );
+  }();
+
+  late final yearlyData = () {
+    final random = Random();
+
+    final date = DateTime.now();
+
+    final from = {
+      for (int i = 0; i < 24; i++)
+        date.subtractMonths(i): Duration(minutes: random.nextInt(90 * 60)),
+    };
+
+    int compare(DateTime a, DateTime b) {
+      return b.compareTo(a);
+    }
+
     return SplayTreeMap<DateTime, Duration>.from(
       from,
       compare,
@@ -62,7 +81,7 @@ class MyApp extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-               /*  const Text('Weekly amount chart'),
+                const Text('Weekly amount chart'),
                 DurationChart(
                   data: smallDataList,
                   viewMode: ViewMode.weekly,
@@ -75,10 +94,10 @@ class MyApp extends StatelessWidget {
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
                 ),
-                sizedBox, */
+                sizedBox,
                 const Text('Yearly amount chart'),
                 DurationChart(
-                  data: smallDataList,
+                  data: yearlyData,
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
                 ),
