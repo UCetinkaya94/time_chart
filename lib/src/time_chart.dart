@@ -602,9 +602,9 @@ class DurationChartState extends State<DurationChart>
                     repaint: _scrollOffsetNotifier,
                     context: context,
                     viewMode: widget.viewMode,
-                    firstValueDateTime: widget.data.isEmpty
+                    latestDate: widget.data.isEmpty
                         ? DateTime.now() //
-                        : widget.data.lastKey()!,
+                        : widget.data.firstKey()!,
                     dayCount: widget.data.length,
                   ),
                 ),

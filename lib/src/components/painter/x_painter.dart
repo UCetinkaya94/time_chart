@@ -5,6 +5,7 @@ import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
+import 'package:time_chart/src/components/utils/extensions.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
 class XPainter extends CustomPainter {
@@ -13,7 +14,7 @@ class XPainter extends CustomPainter {
     required this.viewMode,
     required this.context,
     required this.dayCount,
-    required this.firstValueDateTime,
+    required this.latestDate,
     required this.scrollController,
     required this.data,
   }) : translations = Translations(context);
@@ -21,7 +22,7 @@ class XPainter extends CustomPainter {
   final int dayCount;
   final ViewMode viewMode;
   final BuildContext context;
-  final DateTime firstValueDateTime;
+  final DateTime latestDate;
   final ScrollController scrollController;
   final Translations translations;
   final SplayTreeMap<DateTime, Duration> data;
@@ -34,32 +35,23 @@ class XPainter extends CustomPainter {
     _blockWidth = size.width / dayCount;
     _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
 
-    final narrowWeekdays = getShortWeekdayList(context);
-    final viewModeLimitDay = viewMode.dayCount;
-
     final rightMostVisibleBar = !scrollController.hasClients
         ? 0
         : (scrollController.offset / _blockWidth).floor();
 
-    final dayFromScrollOffset = rightMostVisibleBar - toleranceDay;
+    final paintStartIndex = rightMostVisibleBar - 1;
+    final maxPaintIndex = paintStartIndex + viewMode.dayCount + 2;
 
-    var currentDate = firstValueDateTime.subtract(
-      Duration(days: dayFromScrollOffset),
-    );
-
-    final maxCount = dayFromScrollOffset + viewModeLimitDay + toleranceDay * 2;
-
-    for (int i = dayFromScrollOffset; i <= maxCount; i++) {
+    for (int i = paintStartIndex; i <= maxPaintIndex; i++) {
+      final currentDate = _dateForIndex(i);
       late String text;
       bool isDashed = true;
 
       if (viewMode == ViewMode.weekly) {
-        text = narrowWeekdays[currentDate.weekday % 7];
+        text = getShortWeekdayList(context)[currentDate.weekday % 7];
         if (currentDate.weekday == DateTime.sunday) isDashed = false;
-        currentDate = currentDate.subtract(const Duration(days: 1));
       } else {
         text = currentDate.day.toString();
-        currentDate = currentDate.subtract(const Duration(days: 1));
         // Monthly view mode displays the label once every 7 days.
         if (i % 7 != 6) {
           continue;
@@ -71,6 +63,10 @@ class XPainter extends CustomPainter {
       _drawXText(canvas, size, text, dx);
       _drawVerticalDivideLine(canvas, size, dx, isDashed);
     }
+  }
+
+  DateTime _dateForIndex(int index) {
+    return latestDate.subtractDays(index);
   }
 
   List<MapEntry<DateTime, Duration>> _getVisibleItems() {
