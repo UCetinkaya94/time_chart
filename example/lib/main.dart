@@ -49,7 +49,10 @@ class MyApp extends StatelessWidget {
     final date = DateTime.now();
 
     final from = {
-      for (int i = 0; i < 180; i++) date.subtractMonths(i): Duration(hours: i),
+      for (int i = 0; i < 180; i++)
+        date.subtractMonths(i): Duration(
+          minutes: (i + 1) * 63,
+        ),
     };
 
     int compare(DateTime a, DateTime b) {
@@ -83,6 +86,9 @@ class MyApp extends StatelessWidget {
                   data: smallDataList,
                   viewMode: ViewMode.weekly,
                   barColor: Colors.deepPurple,
+                  onRangeChange: (left, right) {
+                    print('$left - $right');
+                  },
                 ),
                 sizedBox,
                 const Text('Monthly amount chart'),
@@ -90,6 +96,9 @@ class MyApp extends StatelessWidget {
                   data: smallDataList,
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
+                  onRangeChange: (left, right) {
+                    print('$left - $right');
+                  },
                 ),
                 sizedBox,
                 const Text('Yearly amount chart'),
@@ -97,6 +106,9 @@ class MyApp extends StatelessWidget {
                   data: yearlyData,
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
+                  onRangeChange: (left, right) {
+                    print('$left - $right');
+                  },
                 ),
               ],
             ),

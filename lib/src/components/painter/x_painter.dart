@@ -42,7 +42,7 @@ class XPainter extends CustomPainter {
     final maxPaintIndex = paintStartIndex + viewMode.dayCount + 2;
 
     for (int i = paintStartIndex; i <= maxPaintIndex; i++) {
-      final currentDate = _dateForIndex(i);
+      final currentDate = dateForIndex(i);
       late String text;
       bool isDashed = true;
 
@@ -56,7 +56,7 @@ class XPainter extends CustomPainter {
           continue;
         }
       } else {
-        text = getShortMonthList(context)[currentDate.month % 12];
+        text = getShortMonthList(context)[(currentDate.month - 1) % 12];
         if (currentDate.month == DateTime.december) isDashed = false;
       }
 
@@ -67,7 +67,7 @@ class XPainter extends CustomPainter {
     }
   }
 
-  DateTime _dateForIndex(int index) {
+  DateTime dateForIndex(int index) {
     if (viewMode == ViewMode.yearly) {
       return latestDate.subtractMonths(index);
     }

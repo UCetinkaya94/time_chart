@@ -39,6 +39,7 @@ class DurationChart extends StatefulWidget {
     this.activeTooltip = true,
     this.viewMode = ViewMode.weekly,
     this.defaultPivotHour = 0,
+    required this.onRangeChange,
   }) : assert(0 <= defaultPivotHour && defaultPivotHour < 24);
 
   /// Total chart width.
@@ -111,6 +112,8 @@ class DurationChart extends StatefulWidget {
   ///
   /// It must be in the range of 0 to 23.
   final int defaultPivotHour;
+
+  final void Function(DateTime leftDate, DateTime rightDate) onRangeChange;
 
   @override
   DurationChartState createState() => DurationChartState();
@@ -390,10 +393,9 @@ class DurationChartState extends State<DurationChart>
 
   void _timerCallback() {
     final currentMax = _getMaxHour();
-    final temp = _topHour;
+    final prevMax = _topHour;
 
-    _topHour = _getMaxHour();
-    _runAmountHeightAnimation(temp, currentMax);
+    _runAmountHeightAnimation(prevMax, currentMax);
     _topHour = currentMax;
   }
 
@@ -414,6 +416,25 @@ class DurationChartState extends State<DurationChart>
       widget.data.length,
       widget.viewMode.dayCount,
     );
+
+    DateTime dateForIndex(int index) {
+      final latestDate = widget.data.isEmpty
+          ? DateTime.now() //
+          : widget.data.firstKey()!;
+
+      if (widget.viewMode == ViewMode.yearly) {
+        return latestDate.subtractMonths(index);
+      }
+
+      return latestDate.subtractDays(index);
+    }
+
+    if (_barController.hasClients) {
+      widget.onRangeChange(
+        dateForIndex(leftIndex.truncate()),
+        dateForIndex(rightIndex.truncate()),
+      );
+    }
 
     final visibleItems = widget.data.values
         .toList()

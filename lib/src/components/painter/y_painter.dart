@@ -34,6 +34,8 @@ class YPainter extends CustomPainter {
 
     int divider = 2;
 
+    // The top hour is always rounded up to the nearest multiplier of 2, 20 or 50 so
+    // we will never run into a prime number which would cause an infinite loop here
     while (topHour % divider != 0) {
       divider++;
     }
