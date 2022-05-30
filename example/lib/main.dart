@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -25,44 +24,23 @@ class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 
   late final smallDataList = () {
-    final random = Random();
-
     final date = DateTime.now();
 
-    final from = {
-      for (int i = 0; i < 365; i++)
-        date.subtract(Duration(days: i)):
-            Duration(minutes: random.nextInt(10 * 60)),
+    return {
+      for (int i = 0; i < 10000; i++)
+        date.subtract(Duration(days: i)): Duration(minutes: (i + 1) * 5),
     };
-
-    int compare(DateTime a, DateTime b) {
-      return b.compareTo(a);
-    }
-
-    return SplayTreeMap<DateTime, Duration>.from(
-      from,
-      compare,
-    );
   }();
 
   late final yearlyData = () {
     final date = DateTime.now();
 
-    final from = {
+    return {
       for (int i = 0; i < 180; i++)
         date.subtractMonths(i): Duration(
           minutes: (i + 1) * 63,
         ),
     };
-
-    int compare(DateTime a, DateTime b) {
-      return b.compareTo(a);
-    }
-
-    return SplayTreeMap<DateTime, Duration>.from(
-      from,
-      compare,
-    );
   }();
 
   @override
@@ -83,7 +61,7 @@ class MyApp extends StatelessWidget {
               children: [
                 const Text('Weekly amount chart'),
                 DurationChart(
-                  data: smallDataList,
+                  rawData: smallDataList,
                   viewMode: ViewMode.weekly,
                   barColor: Colors.deepPurple,
                   onRangeChange: (left, right) {
@@ -93,7 +71,7 @@ class MyApp extends StatelessWidget {
                 sizedBox,
                 const Text('Monthly amount chart'),
                 DurationChart(
-                  data: smallDataList,
+                  rawData: smallDataList,
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
                   onRangeChange: (left, right) {
@@ -103,7 +81,7 @@ class MyApp extends StatelessWidget {
                 sizedBox,
                 const Text('Yearly amount chart'),
                 DurationChart(
-                  data: yearlyData,
+                  rawData: yearlyData,
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
                   onRangeChange: (left, right) {

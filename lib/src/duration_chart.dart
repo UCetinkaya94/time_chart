@@ -30,7 +30,7 @@ class DurationChart extends StatefulWidget {
     this.width,
     this.height = 280.0,
     required this.barColor,
-    required this.data,
+    required this.rawData,
     this.timeChartSizeAnimationDuration = const Duration(milliseconds: 300),
     this.tooltipDuration = const Duration(seconds: 7),
     this.tooltipBackgroundColor,
@@ -58,8 +58,7 @@ class DurationChart extends StatefulWidget {
 
   /// Pair of a date and a duration.
   ///
-  /// Using a SplayTreeMap ensures, that the dates are correctly sorted
-  final SplayTreeMap<DateTime, Duration> data;
+  final Map<DateTime, Duration> rawData;
 
   /// The size animation duration of time chart when is changed pivot hours.
   ///
@@ -158,6 +157,8 @@ class DurationChartState extends State<DurationChart>
 
   Offset? _overlayOffset;
 
+  late SplayTreeMap<DateTime, Duration> sortedData = _sortData();
+
   @override
   void initState() {
     super.initState();
@@ -192,7 +193,8 @@ class DurationChartState extends State<DurationChart>
   void didUpdateWidget(covariant DurationChart oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.data != widget.data) {
+    if (oldWidget.rawData != widget.rawData) {
+      sortedData = _sortData();
       _topHour = _getMaxHour();
     }
   }
@@ -208,6 +210,17 @@ class DurationChartState extends State<DurationChart>
     GestureBinding.instance.pointerRouter
         .removeGlobalRoute(_handlePointerEvent);
     super.dispose();
+  }
+
+  SplayTreeMap<DateTime, Duration> _sortData() {
+    if (widget.rawData.isEmpty) {
+      return SplayTreeMap<DateTime, Duration>();
+    }
+
+    return SplayTreeMap<DateTime, Duration>.from(
+      widget.rawData,
+      (a, b) => b.compareTo(a),
+    );
   }
 
   void _addScrollNotifier() {
@@ -413,30 +426,26 @@ class DurationChartState extends State<DurationChart>
 
     final leftIndex = getLeftMostVisibleIndex(
       rightIndex,
-      widget.data.length,
+      sortedData.length,
       widget.viewMode.dayCount,
     );
 
-    DateTime dateForIndex(int index) {
-      final latestDate = widget.data.isEmpty
-          ? DateTime.now() //
-          : widget.data.firstKey()!;
-
-      if (widget.viewMode == ViewMode.yearly) {
-        return latestDate.subtractMonths(index);
-      }
-
-      return latestDate.subtractDays(index);
-    }
-
     if (_barController.hasClients) {
       widget.onRangeChange(
-        dateForIndex(leftIndex.truncate()),
-        dateForIndex(rightIndex.truncate()),
+        dateForIndex(
+          index: leftIndex.truncate(),
+          sortedData: sortedData,
+          viewMode: widget.viewMode,
+        ),
+        dateForIndex(
+          index: rightIndex.truncate(),
+          sortedData: sortedData,
+          viewMode: widget.viewMode,
+        ),
       );
     }
 
-    final visibleItems = widget.data.values
+    final visibleItems = sortedData.values
         .toList()
         .getRange(rightIndex.toInt(), leftIndex.toInt() + 1)
         .toList();
@@ -495,7 +504,7 @@ class DurationChartState extends State<DurationChart>
         _totalBarWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
 
         final innerSize = Size(
-          _totalBarWidth! * max(widget.data.length, viewModeLimitDay),
+          _totalBarWidth! * max(sortedData.length, viewModeLimitDay),
           double.infinity,
         );
 
@@ -503,7 +512,7 @@ class DurationChartState extends State<DurationChart>
           blockWidth: _totalBarWidth!,
           viewMode: widget.viewMode,
           scrollPhysicsState: ScrollPhysicsState(
-            dayCount: widget.data.length,
+            dayCount: sortedData.length,
           ),
         );
 
@@ -581,11 +590,11 @@ class DurationChartState extends State<DurationChart>
                       scrollController: _barController,
                       repaint: _scrollOffsetNotifier,
                       context: context,
-                      dataMap: widget.data,
+                      sortedData: sortedData,
                       barColor: widget.barColor,
                       topHour: _topHour,
                       tooltipCallback: _tooltipCallback,
-                      dayCount: widget.data.length,
+                      dayCount: sortedData.length,
                       viewMode: widget.viewMode,
                     ),
                   );
@@ -627,14 +636,11 @@ class DurationChartState extends State<DurationChart>
                   size: innerSize,
                   painter: XPainter(
                     scrollController: _xLabelController,
-                    data: widget.data,
+                    data: sortedData,
                     repaint: _scrollOffsetNotifier,
                     context: context,
                     viewMode: widget.viewMode,
-                    latestDate: widget.data.isEmpty
-                        ? DateTime.now() //
-                        : widget.data.firstKey()!,
-                    dayCount: widget.data.length,
+                    dayCount: sortedData.length,
                   ),
                 ),
               ),

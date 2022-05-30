@@ -3,8 +3,8 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:time_chart/src/components/constants.dart';
+import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
-import 'package:time_chart/src/components/utils/extensions.dart';
 import 'package:time_chart/src/components/view_mode.dart';
 
 class XPainter extends CustomPainter {
@@ -13,7 +13,6 @@ class XPainter extends CustomPainter {
     required this.viewMode,
     required this.context,
     required this.dayCount,
-    required this.latestDate,
     required this.scrollController,
     required this.data,
   }) : translations = Translations(context);
@@ -21,7 +20,6 @@ class XPainter extends CustomPainter {
   final int dayCount;
   final ViewMode viewMode;
   final BuildContext context;
-  final DateTime latestDate;
   final ScrollController scrollController;
   final Translations translations;
   final SplayTreeMap<DateTime, Duration> data;
@@ -42,7 +40,12 @@ class XPainter extends CustomPainter {
     final maxPaintIndex = paintStartIndex + viewMode.dayCount + 2;
 
     for (int i = paintStartIndex; i <= maxPaintIndex; i++) {
-      final currentDate = dateForIndex(i);
+      final currentDate = dateForIndex(
+        index: i,
+        sortedData: data,
+        viewMode: viewMode,
+      );
+
       late String text;
       bool isDashed = true;
 
@@ -65,14 +68,6 @@ class XPainter extends CustomPainter {
       _drawXText(canvas, size, text, dx);
       _drawVerticalDivideLine(canvas, size, dx, isDashed);
     }
-  }
-
-  DateTime dateForIndex(int index) {
-    if (viewMode == ViewMode.yearly) {
-      return latestDate.subtractMonths(index);
-    }
-
-    return latestDate.subtractDays(index);
   }
 
   void _drawXText(Canvas canvas, Size size, String text, double dx) {

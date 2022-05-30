@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/constants.dart';
+import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
 import 'package:time_chart/time_chart.dart';
 import 'package:touchable/touchable.dart';
@@ -22,7 +23,7 @@ class BarPainter extends CustomPainter {
     required super.repaint,
     required this.context,
     required this.viewMode,
-    required this.dataMap,
+    required this.sortedData,
     required this.topHour,
     required this.tooltipCallback,
     required this.barColor,
@@ -36,7 +37,7 @@ class BarPainter extends CustomPainter {
   final ScrollController scrollController;
   final TooltipCallback tooltipCallback;
   final Color barColor;
-  final SplayTreeMap<DateTime, Duration> dataMap;
+  final SplayTreeMap<DateTime, Duration> sortedData;
   final int topHour;
   final barRadius = const Radius.circular(6.0);
 
@@ -100,52 +101,65 @@ class BarPainter extends CustomPainter {
   }
 
   List<AmountBarItem> generateCoordinates(Size size) {
-    setDefaultValue(size);
+    _blockWidth = size.width / dayCount;
+    _barWidth = _blockWidth! * kBarWidthRatio;
+    // [padding] to center the bar position
+    _paddingForAlignedBar = _blockWidth! * kBarPaddingWidthRatio;
+
     final List<AmountBarItem> coordinates = [];
 
-    if (dataMap.isEmpty) return [];
+    if (sortedData.isEmpty) return [];
 
-    final intervalOfBars = size.width / dayCount;
+    final intervalOfBars = _blockWidth!;
+    final startIndex = currentDayFromScrollOffset - 1;
+    final endIndex = startIndex + viewMode.dayCount + 2;
 
-    final viewLimitDay = viewMode.dayCount;
-    final dayFromScrollOffset = currentDayFromScrollOffset;
+    for (int index = startIndex; index <= endIndex; index++) {
+      final date = dateForIndex(
+        index: index,
+        sortedData: sortedData,
+        viewMode: viewMode,
+      );
 
-    double amountSum = 0;
-    int index = 0;
+      final barPosition = index + 1;
 
-    for (final entry in dataMap.entries) {
-      final int barPosition = 1 + index;
-
-      if (barPosition - dayFromScrollOffset > viewLimitDay + 2) {
-        break;
-      }
-
-      amountSum += entry.value.inMinutes / 60;
-
+      final amountSum = _amountForDate(date);
       final normalizedTop = max(0, amountSum) / topHour;
-
       final dy = size.height - normalizedTop * size.height;
       final dx = size.width - intervalOfBars * barPosition;
 
-      coordinates.add(AmountBarItem(dx, dy, amountSum, entry.key));
-
-      amountSum = 0;
-      index++;
+      coordinates.add(AmountBarItem(dx, dy, amountSum, date));
     }
 
     return coordinates;
   }
 
-  void setDefaultValue(Size size) {
-    _blockWidth = size.width / dayCount;
-    _barWidth = _blockWidth! * kBarWidthRatio;
-    // [padding] to center the bar position
-    _paddingForAlignedBar = _blockWidth! * kBarPaddingWidthRatio;
+  double _amountForDate(DateTime date) {
+    if (sortedData.containsKey(date)) {
+      return sortedData[date]!.inMinutes / 60;
+    }
+
+    final before = sortedData.lastKeyBefore(date);
+    final after = sortedData.firstKeyAfter(date);
+
+    DateTime? key;
+
+    if (before != null && before.isSameDate(date)) {
+      key = before;
+    } else if (after != null && after.isSameDate(date)) {
+      key = after;
+    }
+
+    if (key != null) {
+      return sortedData[key]!.inMinutes / 60;
+    }
+
+    return 0.0;
   }
 
   @override
   bool shouldRepaint(BarPainter oldDelegate) {
-    return oldDelegate.dataMap != dataMap;
+    return oldDelegate.sortedData != sortedData;
   }
 }
 

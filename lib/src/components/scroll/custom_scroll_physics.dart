@@ -1,6 +1,8 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:time_chart/src/components/utils/extensions.dart';
 import '../view_mode.dart';
 
 const double _kPivotVelocity = 240.0;
@@ -106,6 +108,22 @@ class CustomScrollPhysics extends ScrollPhysics {
 
   @override
   bool get allowImplicitScrolling => false;
+}
+
+DateTime dateForIndex({
+  required int index,
+  required SplayTreeMap<DateTime, Duration> sortedData,
+  required ViewMode viewMode,
+}) {
+  final latestDate = sortedData.isEmpty
+      ? DateTime.now() //
+      : sortedData.firstKey()!;
+
+  if (viewMode == ViewMode.yearly) {
+    return latestDate.subtractMonths(index);
+  }
+
+  return latestDate.subtractDays(index);
 }
 
 /// Returns the index of the left most visible bar
