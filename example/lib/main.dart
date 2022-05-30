@@ -64,6 +64,7 @@ class MyApp extends StatelessWidget {
                   rawData: smallDataList,
                   viewMode: ViewMode.weekly,
                   barColor: Colors.deepPurple,
+                  onTapOverlay: (date) {},
                   onRangeChange: (left, right) {
                     print('$left - $right');
                   },
@@ -74,6 +75,7 @@ class MyApp extends StatelessWidget {
                   rawData: smallDataList,
                   viewMode: ViewMode.monthly,
                   barColor: Colors.deepPurple,
+                  onTapOverlay: (date) {},
                   onRangeChange: (left, right) {
                     print('$left - $right');
                   },
@@ -84,6 +86,7 @@ class MyApp extends StatelessWidget {
                   rawData: yearlyData,
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
+                  onTapOverlay: (date) {},
                   onRangeChange: (left, right) {
                     print('$left - $right');
                   },

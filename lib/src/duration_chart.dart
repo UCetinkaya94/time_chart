@@ -40,6 +40,7 @@ class DurationChart extends StatefulWidget {
     this.viewMode = ViewMode.weekly,
     this.defaultPivotHour = 0,
     required this.onRangeChange,
+    required this.onTapOverlay,
   }) : assert(0 <= defaultPivotHour && defaultPivotHour < 24);
 
   /// Total chart width.
@@ -113,6 +114,8 @@ class DurationChart extends StatefulWidget {
   final int defaultPivotHour;
 
   final void Function(DateTime leftDate, DateTime rightDate) onRangeChange;
+
+  final void Function(DateTime date) onTapOverlay;
 
   @override
   DurationChartState createState() => DurationChartState();
@@ -349,10 +352,11 @@ class DurationChartState extends State<DurationChart>
         ),
         child: GestureDetector(
           onTap: () {
-            print('tapped');
+            widget.onTapOverlay(amountDate);
           },
           child: TooltipOverlay(
-            backgroundColor: widget.tooltipBackgroundColor,
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
             amountHour: amount,
             amountDate: amountDate,
             direction: direction,

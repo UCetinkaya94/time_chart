@@ -16,7 +16,8 @@ class TooltipOverlay extends StatelessWidget {
     required this.amountHour,
     required this.amountDate,
     required this.direction,
-    this.backgroundColor,
+    required this.textColor,
+    required this.backgroundColor,
     required this.start,
     required this.end,
   }) : super(key: key);
@@ -24,24 +25,24 @@ class TooltipOverlay extends StatelessWidget {
   final double amountHour;
   final DateTime amountDate;
   final Direction direction;
-  final Color? backgroundColor;
+  final Color backgroundColor;
+  final Color textColor;
   final String start;
   final String end;
 
   @override
   Widget build(BuildContext context) {
     final child = _AmountTooltipOverlay(
+      textColor: textColor,
       durationHour: amountHour,
       durationDate: amountDate,
     );
-
-    final themeData = Theme.of(context);
 
     return Material(
       color: const Color(0x00ffffff),
       child: Container(
         decoration: ShapeDecoration(
-          color: backgroundColor ?? themeData.dialogBackgroundColor,
+          color: backgroundColor,
           shape: TooltipShapeBorder(direction: direction),
           shadows: const [
             BoxShadow(
@@ -61,12 +62,14 @@ class TooltipOverlay extends StatelessWidget {
 class _AmountTooltipOverlay extends StatelessWidget {
   const _AmountTooltipOverlay({
     Key? key,
+    required this.textColor,
     required this.durationHour,
     required this.durationDate,
   }) : super(key: key);
 
   final double durationHour;
   final DateTime durationDate;
+  final Color textColor;
 
   int _ceilMinutes() {
     double decimal = durationHour - durationHour.toInt();
@@ -91,15 +94,15 @@ class _AmountTooltipOverlay extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final body2 = textTheme.bodyText2!;
     final bodyTextStyle = body2.copyWith(
-      color: body2.color!.withOpacity(0.5),
+      color: textColor,
       height: 1.2,
     );
     final sub1 = textTheme.subtitle1!;
     final subTitleStyle = sub1.copyWith(
-      color: sub1.color!.withOpacity(0.5),
+      color: textColor,
       height: 1.2,
     );
-    final headerStyle = textTheme.headline4!.copyWith(height: 1.2);
+    final headerStyle = textTheme.headline4!.copyWith(height: 1.2, color: textColor);
 
     final hourString = _getHour();
     final minuteString = _getMinute();
