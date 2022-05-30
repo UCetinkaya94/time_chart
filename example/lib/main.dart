@@ -33,11 +33,12 @@ class MyApp extends StatelessWidget {
   }();
 
   late final yearlyData = () {
-    final date = DateTime.now();
+    final now = DateTime.now();
+    final date = DateTime(now.year, now.month, now.day);
 
     return {
       for (int i = 0; i < 180; i++)
-        date.subtractMonths(i): Duration(
+        DateTime(date.year, date.month - i): Duration(
           minutes: (i + 1) * 63,
         ),
     };

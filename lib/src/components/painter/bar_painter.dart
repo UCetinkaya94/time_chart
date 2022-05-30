@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/scroll/custom_scroll_physics.dart';
 import 'package:time_chart/src/components/translations/translations.dart';
+import 'package:time_chart/src/components/utils/extensions.dart';
 import 'package:time_chart/time_chart.dart';
 import 'package:touchable/touchable.dart';
 
