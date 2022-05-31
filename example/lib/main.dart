@@ -82,16 +82,7 @@ class MyApp extends StatelessWidget {
                 sizedBox, */
                 const Text('Yearly amount chart'),
                 DurationChart(
-                  rawData: {
-                    DateTime.parse('2021-05-01 00:00:00.000'):
-                        const Duration(hours: 100, minutes: 40),
-                    DateTime.parse('2022-05-01 00:00:00.000'):
-                        const Duration(hours: 100, minutes: 40),
-                    DateTime.parse('2022-12-01 00:00:00.000'):
-                        const Duration(hours: 30, minutes: 40),
-                    DateTime.parse('2022-01-01 00:00:00.000'):
-                        const Duration(hours: 100, minutes: 40)
-                  },
+                  rawData: yearlyData,
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
                   onTapOverlay: (date) {},

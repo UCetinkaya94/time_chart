@@ -168,6 +168,8 @@ class DurationChartState extends State<DurationChart>
 
   late DateTime latestDate;
 
+  late int barCount = widget.viewMode.dayCount;
+
   @override
   void initState() {
     super.initState();
@@ -255,6 +257,21 @@ class DurationChartState extends State<DurationChart>
           sorted[latestDate] = Duration.zero;
         }
         break;
+    }
+
+    final start = sorted.lastKey();
+    final end = sorted.firstKey();
+
+    if (start != null && end != null) {
+      if (widget.viewMode == ViewMode.yearly) {
+        barCount = (end.differenceInDays(start).abs() / 30).truncate();
+      } else {
+        barCount = end.differenceInDays(start).abs();
+      }
+    }
+
+    if (barCount < widget.viewMode.dayCount) {
+      barCount = widget.viewMode.dayCount;
     }
 
     return sorted;
@@ -560,9 +577,7 @@ class DurationChartState extends State<DurationChart>
             blockWidth: _totalBarWidth!,
             viewMode: widget.viewMode,
             scrollPhysicsState: ScrollPhysicsState(
-              dayCount: sortedData.length < widget.viewMode.dayCount
-                  ? widget.viewMode.dayCount
-                  : sortedData.length,
+              dayCount: barCount,
             ),
           );
         }
@@ -610,8 +625,7 @@ class DurationChartState extends State<DurationChart>
   bool _shouldSetPhysics() {
     if (_scrollPhysics == null) return true;
     if (_scrollPhysics!.viewMode != widget.viewMode) return true;
-    // TODO: padding 
-    return _scrollPhysics!.scrollPhysicsState.dayCount != sortedData.length;
+    return _scrollPhysics!.scrollPhysicsState.dayCount != barCount;
   }
 
   Positioned _buildBars(
