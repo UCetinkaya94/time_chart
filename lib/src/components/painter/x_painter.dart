@@ -60,7 +60,7 @@ class XPainter extends CustomPainter {
         }
       } else {
         text = getShortMonthList(context)[(currentDate.month - 1) % 12];
-        if (currentDate.month == DateTime.december) isDashed = false;
+        if (currentDate.month == DateTime.january) isDashed = false;
       }
 
       final dx = size.width - (i + 1) * _blockWidth;
