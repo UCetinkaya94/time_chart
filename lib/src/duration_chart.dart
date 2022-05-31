@@ -41,6 +41,7 @@ class DurationChart extends StatefulWidget {
     this.defaultPivotHour = 0,
     required this.onRangeChange,
     required this.onTapOverlay,
+    this.firstDayOfTheWeek = DateTime.monday,
   }) : assert(0 <= defaultPivotHour && defaultPivotHour < 24);
 
   /// Total chart width.
@@ -116,6 +117,8 @@ class DurationChart extends StatefulWidget {
   final void Function(DateTime leftDate, DateTime rightDate) onRangeChange;
 
   final void Function(DateTime date) onTapOverlay;
+
+  final int firstDayOfTheWeek;
 
   @override
   DurationChartState createState() => DurationChartState();
@@ -512,13 +515,15 @@ class DurationChartState extends State<DurationChart>
           double.infinity,
         );
 
-        _scrollPhysics ??= CustomScrollPhysics(
-          blockWidth: _totalBarWidth!,
-          viewMode: widget.viewMode,
-          scrollPhysicsState: ScrollPhysicsState(
-            dayCount: sortedData.length,
-          ),
-        );
+        if (_shouldSetPhysics()) {
+          _scrollPhysics = CustomScrollPhysics(
+            blockWidth: _totalBarWidth!,
+            viewMode: widget.viewMode,
+            scrollPhysicsState: ScrollPhysicsState(
+              dayCount: sortedData.length,
+            ),
+          );
+        }
 
         return SizedBox(
           height: widget.height + kTimeChartTopPadding,
@@ -558,6 +563,12 @@ class DurationChartState extends State<DurationChart>
         );
       },
     );
+  }
+
+  bool _shouldSetPhysics() {
+    if (_scrollPhysics == null) return true;
+    if (_scrollPhysics!.viewMode != widget.viewMode) return true;
+    return _scrollPhysics!.scrollPhysicsState.dayCount != sortedData.length;
   }
 
   Positioned _buildBars(
