@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import 'package:time_chart/src/components/constants.dart';
 import 'package:time_chart/src/components/painter/x_painter.dart';
+import 'package:time_chart/src/components/utils/extensions.dart';
 import 'package:touchable/touchable.dart';
 
 import '../time_chart.dart';
@@ -223,10 +224,38 @@ class DurationChartState extends State<DurationChart>
       return SplayTreeMap<DateTime, Duration>();
     }
 
-    return SplayTreeMap<DateTime, Duration>.from(
+    final sorted = SplayTreeMap<DateTime, Duration>.from(
       widget.rawData,
       (a, b) => b.compareTo(a),
     );
+
+    final latestDate = sorted.firstKey();
+
+    if (latestDate != null) {
+      switch (widget.viewMode) {
+        case ViewMode.weekly:
+          final lastDayOfWeek =
+              latestDate.lastDateOfWeek(widget.firstDayOfTheWeek);
+          if (latestDate.isBeforeDate(lastDayOfWeek)) {
+            sorted[lastDayOfWeek] = Duration.zero;
+          }
+          break;
+        case ViewMode.monthly:
+          final lastDayOfMonth = latestDate.lastDayOfMonth;
+          if (latestDate.isBeforeDate(lastDayOfMonth)) {
+            sorted[lastDayOfMonth] = Duration.zero;
+          }
+          break;
+        case ViewMode.yearly:
+          if (latestDate.month < DateTime.december) {
+            sorted[DateTime(latestDate.year, DateTime.december)] =
+                Duration.zero;
+          }
+          break;
+      }
+    }
+
+    return sorted;
   }
 
   void _addScrollNotifier() {

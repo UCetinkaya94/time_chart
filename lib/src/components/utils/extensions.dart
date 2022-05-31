@@ -43,7 +43,9 @@ extension DateExtensions on DateTime {
     return trimmedUtc.subtract(Duration(days: delta)).trimmed;
   }
 
-  DateTime lastDateOfWeek(int lastDayOfWeek) {
+  DateTime lastDateOfWeek(int firstDayOfWeek) {
+    int lastDayOfWeek = (firstDayOfWeek + 5) % 7 + 1;
+
     final delta = _weekdayDif(from: weekday, to: lastDayOfWeek);
     return trimmedUtc.add(Duration(days: delta)).trimmed;
   }
