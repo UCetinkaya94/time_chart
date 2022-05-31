@@ -79,6 +79,20 @@ extension DateExtensions on DateTime {
     return to.difference(from).inDays;
   }
 
+  int differenceInMonths(DateTime to) {
+    final monthA = month;
+    final monthB = to.month;
+
+    final yearA = year;
+    final yearB = to.year;
+
+    if (monthA <= monthB) {
+      return (monthB - monthA) + (yearB - yearA) * 12;
+    }
+
+    return (12 - monthA + monthB) - (yearB - yearA - 1) * 12;
+  }
+
   int _weekdayDif({required int from, required int to}) {
     return (to - from) % 7;
   }

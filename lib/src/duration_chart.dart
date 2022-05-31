@@ -259,14 +259,14 @@ class DurationChartState extends State<DurationChart>
         break;
     }
 
-    final start = sorted.lastKey();
-    final end = sorted.firstKey();
+    final end = sorted.lastKey();
+    final start = sorted.firstKey();
 
     if (start != null && end != null) {
       if (widget.viewMode == ViewMode.yearly) {
-        barCount = (end.differenceInDays(start).abs() / 30).truncate();
+        barCount = end.differenceInMonths(start) + 1;
       } else {
-        barCount = end.differenceInDays(start).abs();
+        barCount = end.differenceInDays(start) + 1;
       }
     }
 
@@ -505,7 +505,6 @@ class DurationChartState extends State<DurationChart>
 
     while (date.isSameDateOrAfter(startDate)) {
       visibleItems.add(sortedData.valueForDate(date, widget.viewMode));
-      print(date);
 
       if (widget.viewMode == ViewMode.yearly) {
         date = date.subtractMonths(1);
@@ -568,7 +567,7 @@ class DurationChartState extends State<DurationChart>
         _totalBarWidth ??= (totalWidth - yLabelWidth) / viewModeLimitDay;
 
         final innerSize = Size(
-          _totalBarWidth! * max(sortedData.length, viewModeLimitDay),
+          _totalBarWidth! * max(barCount, viewModeLimitDay),
           double.infinity,
         );
 
@@ -577,7 +576,7 @@ class DurationChartState extends State<DurationChart>
             blockWidth: _totalBarWidth!,
             viewMode: widget.viewMode,
             scrollPhysicsState: ScrollPhysicsState(
-              dayCount: barCount,
+              barCount: barCount,
             ),
           );
         }
@@ -625,7 +624,7 @@ class DurationChartState extends State<DurationChart>
   bool _shouldSetPhysics() {
     if (_scrollPhysics == null) return true;
     if (_scrollPhysics!.viewMode != widget.viewMode) return true;
-    return _scrollPhysics!.scrollPhysicsState.dayCount != barCount;
+    return _scrollPhysics!.scrollPhysicsState.barCount != barCount;
   }
 
   Positioned _buildBars(
@@ -667,7 +666,7 @@ class DurationChartState extends State<DurationChart>
                       barColor: widget.barColor,
                       topHour: _topHour,
                       tooltipCallback: _tooltipCallback,
-                      dayCount: sortedData.length,
+                      dayCount: barCount,
                       viewMode: widget.viewMode,
                     ),
                   );
@@ -714,6 +713,7 @@ class DurationChartState extends State<DurationChart>
                     repaint: _scrollOffsetNotifier,
                     context: context,
                     viewMode: widget.viewMode,
+                    barCount: barCount,
                   ),
                 ),
               ),

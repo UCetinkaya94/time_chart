@@ -10,6 +10,7 @@ import 'package:time_chart/src/components/view_mode.dart';
 class XPainter extends CustomPainter {
   XPainter({
     required super.repaint,
+    required this.barCount,
     required this.viewMode,
     required this.context,
     required this.latestDate,
@@ -18,6 +19,7 @@ class XPainter extends CustomPainter {
   }) : translations = Translations(context);
 
   final ViewMode viewMode;
+  final int barCount;
   final DateTime latestDate;
   final BuildContext context;
   final ScrollController scrollController;
@@ -29,7 +31,7 @@ class XPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _blockWidth = size.width / viewMode.dayCount;
+    _blockWidth = size.width / barCount;
     _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
 
     final rightMostVisibleBar = !scrollController.hasClients

@@ -8,10 +8,10 @@ import '../view_mode.dart';
 const double _kPivotVelocity = 240.0;
 
 class ScrollPhysicsState {
-  ScrollPhysicsState({required this.dayCount});
+  ScrollPhysicsState({required this.barCount});
 
   double pixels = 0.0;
-  int dayCount;
+  int barCount;
 }
 
 class CustomScrollPhysics extends ScrollPhysics {
@@ -35,12 +35,12 @@ class CustomScrollPhysics extends ScrollPhysics {
   }
 
   void setDayCount(int dayCount) {
-    scrollPhysicsState.dayCount = dayCount;
+    scrollPhysicsState.barCount = dayCount;
   }
 
   double get _maxPosition {
     var maxPosition =
-        scrollPhysicsState.dayCount.toDouble() - viewMode.dayCount;
+        scrollPhysicsState.barCount.toDouble() - viewMode.dayCount;
     return max(0.0, maxPosition);
   }
 

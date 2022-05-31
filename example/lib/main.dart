@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                /*  const Text('Weekly amount chart'),
+                const Text('Weekly amount chart'),
                 DurationChart(
                   rawData: smallDataList,
                   viewMode: ViewMode.weekly,
@@ -79,7 +79,7 @@ class MyApp extends StatelessWidget {
                     print('$left - $right');
                   },
                 ),
-                sizedBox, */
+                sizedBox,
                 const Text('Yearly amount chart'),
                 DurationChart(
                   rawData: yearlyData,
