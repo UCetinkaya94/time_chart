@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                const Text('Weekly amount chart'),
+                /*  const Text('Weekly amount chart'),
                 DurationChart(
                   rawData: smallDataList,
                   viewMode: ViewMode.weekly,
@@ -79,10 +79,19 @@ class MyApp extends StatelessWidget {
                     print('$left - $right');
                   },
                 ),
-                sizedBox,
+                sizedBox, */
                 const Text('Yearly amount chart'),
                 DurationChart(
-                  rawData: yearlyData,
+                  rawData: {
+                    DateTime.parse('2021-05-01 00:00:00.000'):
+                        const Duration(hours: 100, minutes: 40),
+                    DateTime.parse('2022-05-01 00:00:00.000'):
+                        const Duration(hours: 100, minutes: 40),
+                    DateTime.parse('2022-12-01 00:00:00.000'):
+                        const Duration(hours: 30, minutes: 40),
+                    DateTime.parse('2022-01-01 00:00:00.000'):
+                        const Duration(hours: 100, minutes: 40)
+                  },
                   viewMode: ViewMode.yearly,
                   barColor: Colors.deepPurple,
                   onTapOverlay: (date) {},

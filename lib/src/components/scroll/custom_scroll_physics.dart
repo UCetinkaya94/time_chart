@@ -112,13 +112,9 @@ class CustomScrollPhysics extends ScrollPhysics {
 
 DateTime dateForIndex({
   required int index,
-  required SplayTreeMap<DateTime, Duration> sortedData,
+  required DateTime latestDate,
   required ViewMode viewMode,
 }) {
-  final latestDate = sortedData.isEmpty
-      ? DateTime.now() //
-      : sortedData.firstKey()!;
-
   if (viewMode == ViewMode.yearly) {
     return latestDate.subtractMonths(index);
   }
@@ -132,12 +128,4 @@ double getRightMostVisibleIndex(ScrollPosition position, double itemWidth) {
 }
 
 /// Returns the index of the right most visible bar
-double getLeftMostVisibleIndex(
-  double rightIndex,
-  int totalItemCount,
-  int visibleItemCount,
-) {
-  final leftIndex = rightIndex + (visibleItemCount - 1);
-  // handle out of bounds
-  return min(leftIndex.roundToDouble(), totalItemCount - 1.0);
-}
+

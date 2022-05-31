@@ -166,6 +166,8 @@ class DurationChartState extends State<DurationChart>
 
   late SplayTreeMap<DateTime, Duration> sortedData = _sortData();
 
+  late DateTime latestDate;
+
   @override
   void initState() {
     super.initState();
@@ -229,30 +231,30 @@ class DurationChartState extends State<DurationChart>
       (a, b) => b.compareTo(a),
     );
 
-    final latestDate = sorted.firstKey();
+    latestDate = sorted.firstKey() ?? DateTime.now();
 
-    if (latestDate != null) {
-      switch (widget.viewMode) {
-        case ViewMode.weekly:
-          final lastDayOfWeek =
-              latestDate.lastDateOfWeek(widget.firstDayOfTheWeek);
-          if (latestDate.isBeforeDate(lastDayOfWeek)) {
-            sorted[lastDayOfWeek] = Duration.zero;
-          }
-          break;
-        case ViewMode.monthly:
-          final lastDayOfMonth = latestDate.lastDayOfMonth;
-          if (latestDate.isBeforeDate(lastDayOfMonth)) {
-            sorted[lastDayOfMonth] = Duration.zero;
-          }
-          break;
-        case ViewMode.yearly:
-          if (latestDate.month < DateTime.december) {
-            sorted[DateTime(latestDate.year, DateTime.december)] =
-                Duration.zero;
-          }
-          break;
-      }
+    switch (widget.viewMode) {
+      case ViewMode.weekly:
+        final lastDayOfWeek =
+            latestDate.lastDateOfWeek(widget.firstDayOfTheWeek);
+        if (latestDate.isBeforeDate(lastDayOfWeek)) {
+          latestDate = lastDayOfWeek;
+          sorted[latestDate] = Duration.zero;
+        }
+        break;
+      case ViewMode.monthly:
+        final lastDayOfMonth = latestDate.lastDayOfMonth;
+        if (latestDate.isBeforeDate(lastDayOfMonth)) {
+          latestDate = lastDayOfMonth;
+          sorted[latestDate] = Duration.zero;
+        }
+        break;
+      case ViewMode.yearly:
+        if (latestDate.month < DateTime.december) {
+          latestDate = DateTime(latestDate.year, DateTime.december);
+          sorted[latestDate] = Duration.zero;
+        }
+        break;
     }
 
     return sorted;
@@ -464,21 +466,15 @@ class DurationChartState extends State<DurationChart>
       );
     }
 
-    final leftIndex = getLeftMostVisibleIndex(
-      rightIndex,
-      sortedData.length,
-      widget.viewMode.dayCount,
-    );
-
     final startDate = dateForIndex(
-      index: leftIndex.truncate(),
-      sortedData: sortedData,
+      latestDate: latestDate,
+      index: rightIndex.truncate() + widget.viewMode.dayCount - 1,
       viewMode: widget.viewMode,
     );
 
     final endDate = dateForIndex(
       index: rightIndex.truncate(),
-      sortedData: sortedData,
+      latestDate: latestDate,
       viewMode: widget.viewMode,
     );
 
@@ -486,26 +482,19 @@ class DurationChartState extends State<DurationChart>
       widget.onRangeChange(startDate, endDate);
     }
 
-    final visibleItems = <Duration>[
-      sortedData.valueForDate(endDate),
-    ];
+    final visibleItems = <Duration>{};
 
     var date = endDate;
 
-    while (sortedData.firstKeyAfter(date) != null) {
-      final key = sortedData.firstKeyAfter(date)!;
+    while (date.isSameDateOrAfter(startDate)) {
+      visibleItems.add(sortedData.valueForDate(date, widget.viewMode));
+      print(date);
 
-      if (key.isBeforeDate(startDate)) {
-        break;
+      if (widget.viewMode == ViewMode.yearly) {
+        date = date.subtractMonths(1);
+      } else {
+        date = date.subtractDays(1);
       }
-
-      final value = sortedData[key];
-
-      if (value != null) {
-        visibleItems.add(value);
-      }
-
-      date = key;
     }
 
     double currentMax = 0;
@@ -571,7 +560,9 @@ class DurationChartState extends State<DurationChart>
             blockWidth: _totalBarWidth!,
             viewMode: widget.viewMode,
             scrollPhysicsState: ScrollPhysicsState(
-              dayCount: sortedData.length,
+              dayCount: sortedData.length < widget.viewMode.dayCount
+                  ? widget.viewMode.dayCount
+                  : sortedData.length,
             ),
           );
         }
@@ -619,6 +610,7 @@ class DurationChartState extends State<DurationChart>
   bool _shouldSetPhysics() {
     if (_scrollPhysics == null) return true;
     if (_scrollPhysics!.viewMode != widget.viewMode) return true;
+    // TODO: padding 
     return _scrollPhysics!.scrollPhysicsState.dayCount != sortedData.length;
   }
 
@@ -654,6 +646,7 @@ class DurationChartState extends State<DurationChart>
                     size: innerSize,
                     painter: BarPainter(
                       scrollController: _barController,
+                      latestDate: latestDate,
                       repaint: _scrollOffsetNotifier,
                       context: context,
                       sortedData: sortedData,
@@ -702,11 +695,11 @@ class DurationChartState extends State<DurationChart>
                   size: innerSize,
                   painter: XPainter(
                     scrollController: _xLabelController,
+                    latestDate: latestDate,
                     data: sortedData,
                     repaint: _scrollOffsetNotifier,
                     context: context,
                     viewMode: widget.viewMode,
-                    dayCount: sortedData.length,
                   ),
                 ),
               ),
@@ -772,7 +765,7 @@ class DurationChartState extends State<DurationChart>
 }
 
 extension on SplayTreeMap<DateTime, Duration> {
-  Duration valueForDate(DateTime date) {
+  Duration valueForDate(DateTime date, ViewMode viewMode) {
     if (this[date] != null) {
       return this[date]!;
     }
@@ -780,20 +773,40 @@ extension on SplayTreeMap<DateTime, Duration> {
     final key1 = lastKeyBefore(date);
     final key2 = firstKeyAfter(date);
 
-    if (key1 != null && key1.isSameDate(date)) {
-      final value = this[key1];
-      if (value != null) {
-        return value;
-      }
+    if (viewMode == ViewMode.yearly) {
+      final res1 = _checkMonth(key1, date);
+      final res2 = _checkMonth(key2, date);
+
+      if (res1 != null) return res1;
+      if (res2 != null) return res2;
     }
 
-    if (key2 != null && key2.isSameDate(date)) {
-      final value = this[key2];
-      if (value != null) {
-        return value;
-      }
-    }
+    final res1 = _checkDate(key1, date);
+    final res2 = _checkDate(key2, date);
+
+    if (res1 != null) return res1;
+    if (res2 != null) return res2;
 
     return Duration.zero;
+  }
+
+  Duration? _checkDate(DateTime? key, DateTime date) {
+    if (key != null && key.isSameDate(date)) {
+      final value = this[key];
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  Duration? _checkMonth(DateTime? key, DateTime date) {
+    if (key != null && key.year == date.year && key.month == date.month) {
+      final value = this[key];
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
   }
 }

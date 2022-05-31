@@ -23,6 +23,7 @@ class BarPainter extends CustomPainter {
     int? dayCount,
     required super.repaint,
     required this.context,
+    required this.latestDate,
     required this.viewMode,
     required this.sortedData,
     required this.topHour,
@@ -32,6 +33,7 @@ class BarPainter extends CustomPainter {
         translations = Translations(context);
 
   final int dayCount;
+  final DateTime latestDate;
   final ViewMode viewMode;
   final BuildContext context;
   final Translations translations;
@@ -117,8 +119,8 @@ class BarPainter extends CustomPainter {
 
     for (int index = startIndex; index <= endIndex; index++) {
       final date = dateForIndex(
+        latestDate: latestDate,
         index: index,
-        sortedData: sortedData,
         viewMode: viewMode,
       );
 

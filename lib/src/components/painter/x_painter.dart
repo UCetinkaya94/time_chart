@@ -12,13 +12,13 @@ class XPainter extends CustomPainter {
     required super.repaint,
     required this.viewMode,
     required this.context,
-    required this.dayCount,
+    required this.latestDate,
     required this.scrollController,
     required this.data,
   }) : translations = Translations(context);
 
-  final int dayCount;
   final ViewMode viewMode;
+  final DateTime latestDate;
   final BuildContext context;
   final ScrollController scrollController;
   final Translations translations;
@@ -29,7 +29,7 @@ class XPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _blockWidth = size.width / dayCount;
+    _blockWidth = size.width / viewMode.dayCount;
     _paddingForAlignedBar = _blockWidth * kBarPaddingWidthRatio;
 
     final rightMostVisibleBar = !scrollController.hasClients
@@ -42,7 +42,7 @@ class XPainter extends CustomPainter {
     for (int i = paintStartIndex; i <= maxPaintIndex; i++) {
       final currentDate = dateForIndex(
         index: i,
-        sortedData: data,
+        latestDate: latestDate,
         viewMode: viewMode,
       );
 
@@ -60,7 +60,9 @@ class XPainter extends CustomPainter {
         }
       } else {
         text = getShortMonthList(context)[(currentDate.month - 1) % 12];
-        if (currentDate.month == DateTime.january) isDashed = false;
+        if (currentDate.month == DateTime.january) {
+          isDashed = false;
+        }
       }
 
       final dx = size.width - (i + 1) * _blockWidth;
