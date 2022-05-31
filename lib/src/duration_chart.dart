@@ -451,6 +451,10 @@ class DurationChartState extends State<DurationChart>
   int _getMaxHour() {
     final double rightIndex;
 
+    if (sortedData.isEmpty) {
+      return 8;
+    }
+
     if (!_barController.hasClients) {
       rightIndex = 0.0;
     } else {
@@ -466,25 +470,43 @@ class DurationChartState extends State<DurationChart>
       widget.viewMode.dayCount,
     );
 
+    final startDate = dateForIndex(
+      index: leftIndex.truncate(),
+      sortedData: sortedData,
+      viewMode: widget.viewMode,
+    );
+
+    final endDate = dateForIndex(
+      index: rightIndex.truncate(),
+      sortedData: sortedData,
+      viewMode: widget.viewMode,
+    );
+
     if (_barController.hasClients) {
-      widget.onRangeChange(
-        dateForIndex(
-          index: leftIndex.truncate(),
-          sortedData: sortedData,
-          viewMode: widget.viewMode,
-        ),
-        dateForIndex(
-          index: rightIndex.truncate(),
-          sortedData: sortedData,
-          viewMode: widget.viewMode,
-        ),
-      );
+      widget.onRangeChange(startDate, endDate);
     }
 
-    final visibleItems = sortedData.values
-        .toList()
-        .getRange(rightIndex.toInt(), leftIndex.toInt() + 1)
-        .toList();
+    final visibleItems = <Duration>[
+      sortedData.valueForDate(endDate),
+    ];
+
+    var date = endDate;
+
+    while (sortedData.firstKeyAfter(date) != null) {
+      final key = sortedData.firstKeyAfter(date)!;
+
+      if (key.isBeforeDate(startDate)) {
+        break;
+      }
+
+      final value = sortedData[key];
+
+      if (value != null) {
+        visibleItems.add(value);
+      }
+
+      date = key;
+    }
 
     double currentMax = 0;
 
@@ -746,5 +768,32 @@ class DurationChartState extends State<DurationChart>
       },
       child: child,
     );
+  }
+}
+
+extension on SplayTreeMap<DateTime, Duration> {
+  Duration valueForDate(DateTime date) {
+    if (this[date] != null) {
+      return this[date]!;
+    }
+
+    final key1 = lastKeyBefore(date);
+    final key2 = firstKeyAfter(date);
+
+    if (key1 != null && key1.isSameDate(date)) {
+      final value = this[key1];
+      if (value != null) {
+        return value;
+      }
+    }
+
+    if (key2 != null && key2.isSameDate(date)) {
+      final value = this[key2];
+      if (value != null) {
+        return value;
+      }
+    }
+
+    return Duration.zero;
   }
 }
