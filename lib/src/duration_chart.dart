@@ -160,29 +160,22 @@ class DurationChartState extends State<DurationChart>
 
   double _previousScrollOffset = 0;
 
-  late int _topHour = _getMaxHour();
+  late int _topHour;
 
   Offset? _overlayOffset;
 
-  late SplayTreeMap<DateTime, Duration> sortedData = _sortData();
+  late SplayTreeMap<DateTime, Duration> sortedData;
 
   late DateTime latestDate;
 
-  late int _barCount = widget.viewMode.dayCount;
-
-  int get barCount {
-    print('barCount: $_barCount');
-    return _barCount;
-  }
-
-  set barCount(int value) {
-    print('barCount: $_barCount -> $value');
-    _barCount = value;
-  }
+  late int barCount = widget.viewMode.dayCount;
 
   @override
   void initState() {
     super.initState();
+
+    sortedData = _sortData();
+    _topHour = _getMaxHour();
 
     _barController = _scrollControllerGroup.addAndGet();
     _xLabelController = _scrollControllerGroup.addAndGet();
@@ -228,6 +221,7 @@ class DurationChartState extends State<DurationChart>
     _sizeController.dispose();
     _tooltipController.dispose();
     _pivotHourUpdatingTimer?.cancel();
+    _scrollControllerGroup.resetScroll();
     GestureBinding.instance.pointerRouter
         .removeGlobalRoute(_handlePointerEvent);
     super.dispose();
