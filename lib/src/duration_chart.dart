@@ -168,7 +168,17 @@ class DurationChartState extends State<DurationChart>
 
   late DateTime latestDate;
 
-  late int barCount = widget.viewMode.dayCount;
+  late int _barCount = widget.viewMode.dayCount;
+
+  int get barCount {
+    print('barCount: $_barCount');
+    return _barCount;
+  }
+
+  set barCount(int value) {
+    print('barCount: $_barCount -> $value');
+    _barCount = value;
+  }
 
   @override
   void initState() {
