@@ -166,7 +166,7 @@ class DurationChartState extends State<DurationChart>
 
   late SplayTreeMap<DateTime, Duration> sortedData;
 
-  late DateTime latestDate;
+  DateTime latestDate = DateTime.now();
 
   late int barCount = widget.viewMode.dayCount;
 
@@ -174,11 +174,11 @@ class DurationChartState extends State<DurationChart>
   void initState() {
     super.initState();
 
-    sortedData = _sortData();
-    _topHour = _getMaxHour();
-
     _barController = _scrollControllerGroup.addAndGet();
     _xLabelController = _scrollControllerGroup.addAndGet();
+
+    sortedData = _sortData();
+    _topHour = _getMaxHour();
 
     _sizeController = AnimationController(
       duration: widget.timeChartSizeAnimationDuration,
